@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { TextSwapButton } from "@/components/ui/TextSwapButton";
 import { StatusDot } from "@/components/ui/StatusDot";
 import { CornerAccent } from "@/components/decorative/CornerAccent";
+import { BlinkingCursor } from "@/components/ui/BlinkingCursor";
+import { TerminalConfetti } from "@/components/effects/TerminalConfetti";
+import { useNewsletterSubscription } from "@/hooks/useNewsletterSubscription";
 import { Mail } from "lucide-react";
 
 const springConfig = {
@@ -13,14 +16,37 @@ const springConfig = {
 
 export const NewsletterSection = () => {
   const [email, setEmail] = useState("");
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [confettiOrigin, setConfettiOrigin] = useState({ x: 0, y: 0 });
+  const formRef = useRef<HTMLFormElement>(null);
+  const { subscribe, status, message, reset } = useNewsletterSubscription();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
-      setIsSubmitted(true);
-      setEmail("");
+    if (!email) return;
+
+    // Get form position for confetti origin
+    if (formRef.current) {
+      const rect = formRef.current.getBoundingClientRect();
+      setConfettiOrigin({
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      });
     }
+
+    const result = await subscribe(email);
+    
+    if (result.status === "success") {
+      setShowConfetti(true);
+      setEmail("");
+      // Reset confetti after animation
+      setTimeout(() => setShowConfetti(false), 2500);
+    }
+  };
+
+  const handleTryAgain = () => {
+    reset();
+    setEmail("");
   };
 
   return (
@@ -73,9 +99,20 @@ export const NewsletterSection = () => {
               No spam, just signal.
             </p>
 
+            {/* Confetti Effect */}
+            <TerminalConfetti 
+              isActive={showConfetti} 
+              originX={confettiOrigin.x} 
+              originY={confettiOrigin.y} 
+            />
+
             {/* Form */}
-            {!isSubmitted ? (
-              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+            {status === "idle" || status === "loading" ? (
+              <form 
+                ref={formRef}
+                onSubmit={handleSubmit} 
+                className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto"
+              >
                 <div className="relative flex-1">
                   <input
                     type="email"
@@ -83,17 +120,18 @@ export const NewsletterSection = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="your@email.com"
                     required
-                    className="w-full px-4 py-3 bg-background border-2 border-primary/50 rounded-sm font-mono text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:glow-amber-box transition-all"
+                    disabled={status === "loading"}
+                    className="w-full px-4 py-3 bg-background border-2 border-primary/50 rounded-sm font-mono text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:glow-amber-box transition-all disabled:opacity-50"
                   />
                 </div>
                 <TextSwapButton
-                  defaultText="Subscribe to the Log"
-                  hoverText="write_to_stdout"
+                  defaultText={status === "loading" ? "Processing..." : "Subscribe to the Log"}
+                  hoverText={status === "loading" ? "writing_to_db..." : "write_to_stdout"}
                   variant="primary"
                   size="md"
                 />
               </form>
-            ) : (
+            ) : status === "success" ? (
               <motion.div
                 className="flex flex-col items-center gap-4"
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -102,11 +140,53 @@ export const NewsletterSection = () => {
               >
                 <StatusDot status="available" />
                 <p className="font-mono text-primary">
-                  &gt; subscription.confirmed ✓
+                  {message}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Welcome to the build log. Check your inbox.
                 </p>
+              </motion.div>
+            ) : status === "duplicate" ? (
+              <motion.div
+                className="flex flex-col items-center gap-4"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: "spring", ...springConfig }}
+              >
+                <StatusDot status="busy" />
+                <p className="font-mono text-primary">
+                  {message}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  You're already on the list. Stay tuned.
+                </p>
+                <button
+                  onClick={handleTryAgain}
+                  className="text-xs text-muted-foreground hover:text-primary font-mono transition-colors"
+                >
+                  &gt; try_another_email<BlinkingCursor />
+                </button>
+              </motion.div>
+            ) : (
+              <motion.div
+                className="flex flex-col items-center gap-4"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: "spring", ...springConfig }}
+              >
+                <StatusDot status="offline" />
+                <p className="font-mono text-destructive">
+                  {message}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Something went wrong. Please try again.
+                </p>
+                <button
+                  onClick={handleTryAgain}
+                  className="text-xs text-muted-foreground hover:text-primary font-mono transition-colors"
+                >
+                  &gt; retry_connection<BlinkingCursor />
+                </button>
               </motion.div>
             )}
 

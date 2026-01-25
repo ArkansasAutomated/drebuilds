@@ -8,6 +8,8 @@ import { TechStackSection } from "@/components/sections/TechStackSection";
 import { NewsletterSection } from "@/components/sections/NewsletterSection";
 import { TestimonialsSection } from "@/components/sections/TestimonialsSection";
 import { FooterSection } from "@/components/sections/FooterSection";
+import { MobileCommandCenter } from "@/components/navigation/MobileCommandCenter";
+import { ScrollReactiveGrid } from "@/components/effects/ScrollReactiveGrid";
 
 const Index = () => {
   const [isBooted, setIsBooted] = useState(false);
@@ -38,15 +40,22 @@ const Index = () => {
       {!isBooted && <BootSequence onComplete={() => setIsBooted(true)} />}
       
       {isBooted && (
-        <main className="relative bg-background min-h-screen">
-          <HeroSection />
-          <LogicGatesSection />
-          <ContentMarquee />
-          <TechStackSection />
-          <NewsletterSection />
-          <TestimonialsSection />
-          <FooterSection />
-        </main>
+        <ScrollReactiveGrid className="min-h-screen">
+          <main className="relative bg-background min-h-screen">
+            <HeroSection />
+            <LogicGatesSection />
+            <ContentMarquee />
+            <TechStackSection />
+            <section id="newsletter">
+              <NewsletterSection />
+            </section>
+            <section id="testimonials">
+              <TestimonialsSection />
+            </section>
+            <FooterSection />
+            <MobileCommandCenter />
+          </main>
+        </ScrollReactiveGrid>
       )}
     </>
   );
