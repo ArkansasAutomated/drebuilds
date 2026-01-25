@@ -129,6 +129,7 @@ export const NewsletterSection = () => {
                   hoverText={status === "loading" ? "writing_to_db..." : "write_to_stdout"}
                   variant="primary"
                   size="md"
+                  type="submit"
                 />
               </form>
             ) : status === "success" ? (
