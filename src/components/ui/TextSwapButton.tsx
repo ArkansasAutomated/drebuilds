@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TextSwapButtonProps {
   defaultText: string;
@@ -10,6 +11,7 @@ interface TextSwapButtonProps {
   size?: "sm" | "md" | "lg";
   className?: string;
   icon?: React.ReactNode;
+  trackingId?: string;
 }
 
 const springConfig = {
@@ -26,8 +28,32 @@ export const TextSwapButton = ({
   size = "md",
   className,
   icon,
+  trackingId,
 }: TextSwapButtonProps) => {
   const [isHovered, setIsHovered] = useState(false);
+
+  const handleClick = async () => {
+    // Track click if trackingId is provided
+    if (trackingId) {
+      const sessionId = sessionStorage.getItem("session_id") || 
+        (() => {
+          const id = crypto.randomUUID();
+          sessionStorage.setItem("session_id", id);
+          return id;
+        })();
+
+      supabase
+        .from("button_clicks")
+        .insert({ 
+          button_id: trackingId, 
+          session_id: sessionId,
+          page_section: "logic_gates"
+        })
+        .then(() => {});
+    }
+
+    onClick?.();
+  };
 
   const variants = {
     primary: "bg-primary text-primary-foreground hover:bg-primary-glow",
@@ -52,7 +78,7 @@ export const TextSwapButton = ({
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={onClick}
+      onClick={handleClick}
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
     >

@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 interface StatusDotProps {
-  status?: "available" | "busy" | "offline";
+  status?: "available" | "busy" | "offline" | "online" | "warning";
   label?: string;
   className?: string;
 }
@@ -13,7 +13,9 @@ export const StatusDot = ({
 }: StatusDotProps) => {
   const statusColors = {
     available: "bg-success",
+    online: "bg-success",
     busy: "bg-primary",
+    warning: "bg-primary",
     offline: "bg-muted-foreground",
   };
 
