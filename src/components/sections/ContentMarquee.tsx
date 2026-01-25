@@ -1,7 +1,9 @@
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import { NodeConnection } from "@/components/decorative/NodeConnection";
+import { supabase } from "@/integrations/supabase/client";
 
-const contentItems = [
+const defaultContentItems = [
   "Real-time Builds",
   "Weekly Automation Breakdowns",
   "Raw Code Sessions",
@@ -11,6 +13,22 @@ const contentItems = [
 ];
 
 export const ContentMarquee = () => {
+  // Fetch dynamic content from database
+  const { data: dbItems } = useQuery({
+    queryKey: ["content-items"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("content_items")
+        .select("text")
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+      if (error) throw error;
+      return data?.map(item => item.text) || [];
+    },
+  });
+
+  const contentItems = dbItems && dbItems.length > 0 ? dbItems : defaultContentItems;
+
   // Double the content for seamless loop
   const doubledContent = [...contentItems, ...contentItems];
 
