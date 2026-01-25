@@ -7,13 +7,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { BlinkingCursor } from "@/components/ui/BlinkingCursor";
 import { TextSwapButton } from "@/components/ui/TextSwapButton";
 import { StatusDot } from "@/components/ui/StatusDot";
+import { toast } from "sonner";
+import { z } from "zod";
+
+// Validation schemas matching DB constraints
+const offerSchema = z.object({
+  title: z.string().min(1, "Title required").max(100, "Title too long"),
+  price: z.string().min(1, "Price required").max(50, "Price too long"),
+  link: z.string()
+    .refine(val => !val || /^(\/[a-zA-Z0-9_-]+)+$/.test(val) || /^https?:\/\/[a-zA-Z0-9][a-zA-Z0-9.-]+/.test(val), 
+      "Invalid link format (use /path or https://...)")
+    .optional()
+    .nullable(),
+});
 
 const springConfig = {
   mass: 1,
   stiffness: 120,
   damping: 14,
 };
-
 export const OfferEditor = () => {
   const queryClient = useQueryClient();
   const { data: offers, isLoading } = useOfferSettings();
@@ -45,16 +57,32 @@ export const OfferEditor = () => {
 
   const updateMutation = useMutation({
     mutationFn: async () => {
+      // Validate before sending to DB
+      const validation = offerSchema.safeParse({ title, price, link: link || null });
+      if (!validation.success) {
+        throw new Error(validation.error.errors[0].message);
+      }
+      
       const { error } = await supabase
         .from("offer_settings")
-        .update({ price, link, title })
+        .update({ 
+          price: validation.data.price, 
+          link: validation.data.link || null, 
+          title: validation.data.title 
+        })
         .eq("id", "consulting");
-      if (error) throw error;
+      if (error) {
+        if (error.code === "23514") throw new Error("Validation failed - check field lengths");
+        throw error;
+      }
     },
     onSuccess: () => {
       setIsDirty(false);
       queryClient.invalidateQueries({ queryKey: ["admin", "offer-settings"] });
       queryClient.invalidateQueries({ queryKey: ["offer-settings"] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update offer");
     },
   });
 

@@ -33,8 +33,11 @@ export const TextSwapButton = ({
   const [isHovered, setIsHovered] = useState(false);
 
   const handleClick = async () => {
-    // Track click if trackingId is provided
+    // Track click if trackingId is provided (with validation)
     if (trackingId) {
+      // Validate trackingId length (matches DB constraint)
+      const sanitizedTrackingId = trackingId.slice(0, 100);
+      
       const sessionId = sessionStorage.getItem("session_id") || 
         (() => {
           const id = crypto.randomUUID();
@@ -42,11 +45,15 @@ export const TextSwapButton = ({
           return id;
         })();
 
+      // Validate session_id length (matches DB constraint)
+      const sanitizedSessionId = sessionId.slice(0, 100);
+
+      // Fire and forget - don't block UI
       supabase
         .from("button_clicks")
         .insert({ 
-          button_id: trackingId, 
-          session_id: sessionId,
+          button_id: sanitizedTrackingId, 
+          session_id: sanitizedSessionId,
           page_section: "logic_gates"
         })
         .then(() => {});
