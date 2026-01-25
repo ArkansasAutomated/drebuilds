@@ -26,16 +26,13 @@ const Index = () => {
   useEffect(() => {
     if (isBooted) {
       const lenis = new Lenis({
-        duration: 1.8,
-        easing: (t) => {
-          // Custom easing with more "resistance" - heavier brutalist feel
-          return t < 0.5
-            ? 4 * t * t * t
-            : 1 - Math.pow(-2 * t + 2, 3) / 2;
-        },
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Expo-out for smooth deceleration
         smoothWheel: true,
-        wheelMultiplier: 0.8,
-        touchMultiplier: 1.5,
+        wheelMultiplier: 1.0,
+        touchMultiplier: 2.0,
+        syncTouch: false,
+        syncTouchLerp: 0.075,
       });
 
       function raf(time: number) {

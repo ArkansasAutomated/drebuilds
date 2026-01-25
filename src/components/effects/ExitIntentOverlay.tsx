@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { X } from "lucide-react";
 import { CornerAccent } from "@/components/decorative/CornerAccent";
 import { BlinkingCursor } from "@/components/ui/BlinkingCursor";
 import { markExitIntentShown } from "@/hooks/useExitIntent";
@@ -15,7 +16,7 @@ const MESSAGES = [
   "> Before you disconnect, would you like to clone the latest Agentic Blueprint?",
 ];
 
-const TYPING_SPEED_MS = 40;
+const TYPING_SPEED_MS = 20;
 
 export const ExitIntentOverlay = ({
   isOpen,
@@ -66,13 +67,9 @@ export const ExitIntentOverlay = ({
 
       return () => clearTimeout(timer);
     } else {
-      // Typing complete
+      // Typing complete - show buttons immediately
       setIsTypingComplete(true);
-      const timer = setTimeout(() => {
-        setShowButtons(true);
-      }, 400);
-
-      return () => clearTimeout(timer);
+      setShowButtons(true);
     }
   }, [isOpen, currentLine, currentChar, isTypingComplete]);
 
@@ -136,7 +133,12 @@ export const ExitIntentOverlay = ({
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.3, ease: "easeOut" as const },
+      transition: {
+        type: "spring" as const,
+        mass: 1,
+        stiffness: 120,
+        damping: 14,
+      },
     },
   };
 
@@ -155,10 +157,21 @@ export const ExitIntentOverlay = ({
           aria-labelledby="exit-intent-title"
         >
           <motion.div
-            className="relative max-w-lg w-full mx-4 p-8 bg-[hsl(var(--background))] border border-primary/30 shadow-[0_0_30px_rgba(212,160,18,0.15)]"
+            className="relative max-w-lg w-full mx-4 p-8 glass border border-primary/30 shadow-[0_0_30px_rgba(212,160,18,0.15)]"
             variants={boxVariants}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Close Button */}
+            <motion.button
+              onClick={handleDismiss}
+              className="absolute top-4 right-4 p-1 text-muted-foreground hover:text-primary transition-colors z-10"
+              aria-label="Close dialog"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <X size={18} />
+            </motion.button>
+
             {/* Corner Accents */}
             <CornerAccent position="tl" size={20} />
             <CornerAccent position="tr" size={20} />
