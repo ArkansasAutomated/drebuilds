@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" width="200" height="80">
+  <defs>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="200" height="80" fill="#0D0D0D" rx="4"/>
+  
+  <!-- Compact Terminal Text -->
+  <text x="15" y="55" font-family="'JetBrains Mono', 'Courier New', monospace" font-size="42" font-weight="700" fill="#D4A012" filter="url(#glow)">
+    &gt; DB_
+  </text>
+</svg>
