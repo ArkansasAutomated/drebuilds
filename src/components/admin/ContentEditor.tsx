@@ -7,7 +7,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { BlinkingCursor } from "@/components/ui/BlinkingCursor";
 import { TextSwapButton } from "@/components/ui/TextSwapButton";
 import { ArrowUp, ArrowDown, X, Plus } from "lucide-react";
+import { toast } from "sonner";
+import { z } from "zod";
 
+// Validation schema matching DB constraints
+const contentTextSchema = z.string().min(1, "Text required").max(500, "Text too long (max 500 chars)");
 const springConfig = {
   mass: 1,
   stiffness: 120,
@@ -49,16 +53,28 @@ export const ContentEditor = () => {
 
   const addItemMutation = useMutation({
     mutationFn: async (text: string) => {
+      // Validate before sending to DB
+      const validation = contentTextSchema.safeParse(text);
+      if (!validation.success) {
+        throw new Error(validation.error.errors[0].message);
+      }
+      
       const maxOrder = items ? Math.max(...items.map(i => i.display_order), 0) : 0;
       const { error } = await supabase
         .from("content_items")
-        .insert({ text, display_order: maxOrder + 1 });
-      if (error) throw error;
+        .insert({ text: validation.data, display_order: maxOrder + 1 });
+      if (error) {
+        if (error.code === "23514") throw new Error("Validation failed - check text length");
+        throw error;
+      }
     },
     onSuccess: () => {
       setNewItemText("");
       queryClient.invalidateQueries({ queryKey: ["admin", "content-items"] });
       queryClient.invalidateQueries({ queryKey: ["content-items"] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to add item");
     },
   });
 
