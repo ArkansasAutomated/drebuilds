@@ -12,6 +12,7 @@ interface TextSwapButtonProps {
   className?: string;
   icon?: React.ReactNode;
   trackingId?: string;
+  type?: "button" | "submit" | "reset";
 }
 
 const springConfig = {
@@ -29,6 +30,7 @@ export const TextSwapButton = ({
   className,
   icon,
   trackingId,
+  type = "button",
 }: TextSwapButtonProps) => {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -76,6 +78,7 @@ export const TextSwapButton = ({
 
   return (
     <motion.button
+      type={type}
       className={cn(
         "relative overflow-hidden font-mono font-medium transition-colors",
         "rounded-sm glow-amber-box",
