@@ -3,7 +3,7 @@ import { TextSwapButton } from "@/components/ui/TextSwapButton";
 import { BlinkingCursor } from "@/components/ui/BlinkingCursor";
 import { StatusDot } from "@/components/ui/StatusDot";
 import { CornerAccent } from "@/components/decorative/CornerAccent";
-import { ArrowRight, Code2 } from "lucide-react";
+import { ArrowRight, Code2, ChevronDown } from "lucide-react";
 
 const springConfig = {
   mass: 1,
@@ -105,23 +105,35 @@ export const HeroSection = () => {
         <CornerAccent position="br" size={40} className="opacity-40" />
       </div>
 
-      {/* Scroll Indicator */}
+      {/* Double Chevron Scroll Indicator */}
       <motion.div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2"
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center"
         initial={{ opacity: 0 }}
-        animate={{ opacity: 1, y: [0, 10, 0] }}
-        transition={{ 
-          opacity: { delay: 1 },
-          y: { repeat: Infinity, duration: 2, ease: "easeInOut" }
-        }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1 }}
       >
-        <div className="w-6 h-10 border-2 border-primary/40 rounded-full flex items-start justify-center p-2">
-          <motion.div
-            className="w-1.5 h-1.5 bg-primary rounded-full"
-            animate={{ y: [0, 16, 0] }}
-            transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-          />
-        </div>
+        <motion.div
+          animate={{ y: [0, 6, 0] }}
+          transition={{
+            repeat: Infinity,
+            duration: 1.5,
+            ease: "easeInOut",
+          }}
+        >
+          <ChevronDown className="w-5 h-5 text-primary glow-amber" strokeWidth={2} />
+        </motion.div>
+        <motion.div
+          className="-mt-2"
+          animate={{ y: [0, 6, 0] }}
+          transition={{
+            repeat: Infinity,
+            duration: 1.5,
+            ease: "easeInOut",
+            delay: 0.12,
+          }}
+        >
+          <ChevronDown className="w-5 h-5 text-primary/50" strokeWidth={2} />
+        </motion.div>
       </motion.div>
     </section>
   );
