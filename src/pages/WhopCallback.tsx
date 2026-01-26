@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { TerminalTypingText } from "@/components/ui/TerminalTypingText";
 import { BlinkingCursor } from "@/components/ui/BlinkingCursor";
 import { CornerAccent } from "@/components/decorative/CornerAccent";
 import { Terminal, CheckCircle, XCircle } from "lucide-react";
@@ -141,11 +142,18 @@ const WhopCallback = () => {
           </div>
 
           {/* Status Display */}
-          <div className="space-y-4">
-            <div className="font-mono text-sm text-foreground flex items-center gap-2">
-              <span>&gt; {message}</span>
-              {status === "processing" && <BlinkingCursor />}
-            </div>
+            <div className="space-y-4">
+              <div className="font-mono text-sm text-foreground">
+                {status === "processing" ? (
+                  <TerminalTypingText 
+                    text={`> ${message}`} 
+                    speed={20}
+                    showCursor={true}
+                  />
+                ) : (
+                  <span>&gt; {message}</span>
+                )}
+              </div>
 
             {status === "success" && (
               <motion.div
