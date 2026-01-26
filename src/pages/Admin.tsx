@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { useAuth } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { CommandCenterLayout } from "@/components/admin/CommandCenterLayout";
 import { SubscriberPanel } from "@/components/admin/SubscriberPanel";
@@ -8,6 +7,8 @@ import { ContentEditor } from "@/components/admin/ContentEditor";
 import { OfferEditor } from "@/components/admin/OfferEditor";
 import { TelemetryPanel } from "@/components/admin/TelemetryPanel";
 import { QuickStatCard } from "@/components/admin/QuickStatCard";
+import { ConversionFunnel } from "@/components/admin/ConversionFunnel";
+import { LiveEventLog } from "@/components/admin/LiveEventLog";
 import { useSubscriberStats, useClickStats } from "@/hooks/useAdminStats";
 import { Users, MousePointer, Zap } from "lucide-react";
 
@@ -51,13 +52,21 @@ const AdminDashboard = () => {
           />
         </div>
 
-        {/* Row 2: Main Analytics Panels */}
+        {/* Row 2: Conversion Pipeline */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <ConversionFunnel />
+          </div>
+          <LiveEventLog />
+        </div>
+
+        {/* Row 3: Analytics Panels */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <SubscriberPanel />
           <TelemetryPanel />
         </div>
 
-        {/* Row 3: Click Tracking */}
+        {/* Row 4: Click Tracking */}
         <ClickTrackingPanel />
 
         {/* Row 4: Content Management */}
