@@ -1,8 +1,23 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+  "https://drebuilds.online",
+  "https://drebuilds.lovable.app",
+  "http://localhost:5173",
+  "http://localhost:8080",
+];
+
+const getCorsHeaders = (origin: string | null) => {
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin || "") 
+    ? origin 
+    : ALLOWED_ORIGINS[0];
+  
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin!,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Credentials": "true",
+  };
 };
 
 // Simple in-memory rate limiting (resets on function restart)
@@ -63,42 +78,40 @@ const encryptToken = async (token: string, keyHex: string): Promise<string> => {
 };
 
 const decryptToken = async (encryptedToken: string, keyHex: string): Promise<string> => {
-  try {
-    // Decode base64
-    const combined = new Uint8Array(
-      atob(encryptedToken).split("").map(c => c.charCodeAt(0))
-    );
-    
-    // Extract IV (first 12 bytes) and encrypted data
-    const iv = combined.slice(0, 12);
-    const encrypted = combined.slice(12);
-    
-    // Derive key from hex string
-    const keyBytes = new Uint8Array(keyHex.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []);
-    
-    const key = await crypto.subtle.importKey(
-      "raw",
-      keyBytes,
-      { name: "AES-GCM" },
-      false,
-      ["decrypt"]
-    );
-    
-    const decrypted = await crypto.subtle.decrypt(
-      { name: "AES-GCM", iv },
-      key,
-      encrypted
-    );
-    
-    return new TextDecoder().decode(decrypted);
-  } catch {
-    // Return original if decryption fails (for backward compatibility with unencrypted tokens)
-    console.warn("Token decryption failed, may be unencrypted legacy token");
-    return encryptedToken;
-  }
+  // Decode base64
+  const combined = new Uint8Array(
+    atob(encryptedToken).split("").map(c => c.charCodeAt(0))
+  );
+  
+  // Extract IV (first 12 bytes) and encrypted data
+  const iv = combined.slice(0, 12);
+  const encrypted = combined.slice(12);
+  
+  // Derive key from hex string
+  const keyBytes = new Uint8Array(keyHex.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []);
+  
+  const key = await crypto.subtle.importKey(
+    "raw",
+    keyBytes,
+    { name: "AES-GCM" },
+    false,
+    ["decrypt"]
+  );
+  
+  const decrypted = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv },
+    key,
+    encrypted
+  );
+  
+  return new TextDecoder().decode(decrypted);
+  // NOTE: No fallback - if decryption fails, users must re-authenticate
 };
 
 Deno.serve(async (req) => {
+  const origin = req.headers.get("Origin");
+  const corsHeaders = getCorsHeaders(origin);
+  
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
