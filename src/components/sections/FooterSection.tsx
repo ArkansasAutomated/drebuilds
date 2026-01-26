@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, Twitter, Youtube, Github } from "lucide-react";
 import logoPrimary from "@/assets/brand/dre-builds-logo-primary-transparent.svg";
@@ -76,14 +77,14 @@ export const FooterSection = () => {
             </h3>
             <nav className="space-y-3">
               {navLinks.map((link) => (
-                <a
+                <Link
                   key={link.path}
-                  href={link.href}
+                  to={link.href}
                   className="group flex items-center gap-2 text-sm hover:text-primary transition-colors"
                 >
                   <ChevronRight className="w-4 h-4 text-primary/60 group-hover:text-primary transition-colors" />
                   <span className="font-mono">{link.path}</span>
-                </a>
+                </Link>
               ))}
             </nav>
           </motion.div>
