@@ -170,6 +170,54 @@ export type Database = {
         }
         Relationships: []
       }
+      whop_users: {
+        Row: {
+          access_token: string
+          company_ids: string[] | null
+          created_at: string | null
+          email: string | null
+          id: string
+          metadata: Json | null
+          plan_ids: string[] | null
+          profile_pic_url: string | null
+          refresh_token: string | null
+          updated_at: string | null
+          user_id: string
+          username: string | null
+          whop_user_id: string
+        }
+        Insert: {
+          access_token: string
+          company_ids?: string[] | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          metadata?: Json | null
+          plan_ids?: string[] | null
+          profile_pic_url?: string | null
+          refresh_token?: string | null
+          updated_at?: string | null
+          user_id: string
+          username?: string | null
+          whop_user_id: string
+        }
+        Update: {
+          access_token?: string
+          company_ids?: string[] | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          metadata?: Json | null
+          plan_ids?: string[] | null
+          profile_pic_url?: string | null
+          refresh_token?: string | null
+          updated_at?: string | null
+          user_id?: string
+          username?: string | null
+          whop_user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

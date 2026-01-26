@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { z } from "zod";
 import { useAuth } from "@/hooks/useAuth";
+import { useWhopUser } from "@/hooks/useWhopUser";
 import { CornerAccent } from "@/components/decorative/CornerAccent";
 import { BlinkingCursor } from "@/components/ui/BlinkingCursor";
 import { TextSwapButton } from "@/components/ui/TextSwapButton";
@@ -28,6 +29,7 @@ const Auth = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   
   const { user, signIn, signUp, isLoading } = useAuth();
+  const { initiateWhopOAuth } = useWhopUser();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -186,6 +188,29 @@ const Auth = () => {
               className="w-full"
             />
           </form>
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-card px-2 text-muted-foreground font-mono">
+                // or
+              </span>
+            </div>
+          </div>
+
+          {/* Whop OAuth Button */}
+          <TextSwapButton
+            type="button"
+            defaultText="Connect with Whop"
+            hoverText="whop.oauth()"
+            variant="outline"
+            size="md"
+            className="w-full"
+            onClick={initiateWhopOAuth}
+          />
 
           {/* Toggle Auth Mode */}
           <div className="mt-6 pt-6 border-t border-border">
