@@ -28,8 +28,9 @@ interface WhopUserState {
   error: Error | null;
 }
 
-const WHOP_CLIENT_ID = import.meta.env.VITE_WHOP_CLIENT_ID;
-const WHOP_COMPANY_ID = import.meta.env.VITE_WHOP_COMPANY_ID;
+// Public OAuth config values
+const WHOP_CLIENT_ID = "app_ndC8gk4czaoeFG";
+const WHOP_COMPANY_ID = "biz_LBZIL5SNocl6WR";
 const REDIRECT_URI = "https://drebuilds.online/auth/whop/callback";
 
 export const useWhopUser = () => {
