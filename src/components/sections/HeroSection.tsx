@@ -87,6 +87,10 @@ export const HeroSection = () => {
               variant="primary"
               size="lg"
               icon={<Code2 size={20} />}
+              onClick={() => {
+                const section = document.getElementById("logic-gates");
+                section?.scrollIntoView({ behavior: "smooth" });
+              }}
             />
             <TextSwapButton
               defaultText="Hire for Architecture"
@@ -94,6 +98,9 @@ export const HeroSection = () => {
               variant="outline"
               size="lg"
               icon={<ArrowRight size={20} />}
+              onClick={() => {
+                window.open("https://cal.com/drebuilds", "_blank", "noopener,noreferrer");
+              }}
             />
           </motion.div>
         </motion.div>
