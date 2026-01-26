@@ -1,73 +1,72 @@
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { SystemStatusPanel } from "@/components/admin/SystemStatusPanel";
+import { CommandCenterLayout } from "@/components/admin/CommandCenterLayout";
 import { SubscriberPanel } from "@/components/admin/SubscriberPanel";
 import { ClickTrackingPanel } from "@/components/admin/ClickTrackingPanel";
 import { ContentEditor } from "@/components/admin/ContentEditor";
 import { OfferEditor } from "@/components/admin/OfferEditor";
-import { TextSwapButton } from "@/components/ui/TextSwapButton";
-import { ArrowLeft, LogOut } from "lucide-react";
+import { TelemetryPanel } from "@/components/admin/TelemetryPanel";
+import { QuickStatCard } from "@/components/admin/QuickStatCard";
+import { useSubscriberStats, useClickStats } from "@/hooks/useAdminStats";
+import { Users, MousePointer, Zap } from "lucide-react";
+
+const springConfig = {
+  mass: 1,
+  stiffness: 120,
+  damping: 14,
+};
 
 const AdminDashboard = () => {
-  const { signOut } = useAuth();
-  const navigate = useNavigate();
+  const { data: subscriberStats } = useSubscriberStats();
+  const { data: clickStats } = useClickStats();
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/");
-  };
+  const totalClicks = clickStats?.reduce((sum, stat) => sum + stat.clicks, 0) || 0;
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <button
-            onClick={() => navigate("/")}
-            className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors font-mono text-sm"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>&gt; cd ..</span>
-          </button>
-
-          <TextSwapButton
-            defaultText="Sign Out"
-            hoverText="auth.signOut()"
-            variant="outline"
-            size="sm"
-            icon={<LogOut className="w-4 h-4" />}
-            onClick={handleSignOut}
+    <CommandCenterLayout>
+      <motion.div
+        className="space-y-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        {/* Row 1: Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <QuickStatCard
+            label="Subscribers"
+            value={subscriberStats?.total || 0}
+            trend={subscriberStats?.growthPercent ? `${subscriberStats.growthPercent > 0 ? '+' : ''}${subscriberStats.growthPercent}%` : undefined}
+            icon={<Users size={18} />}
+          />
+          <QuickStatCard
+            label="Today's Signups"
+            value={subscriberStats?.today || 0}
+            icon={<Zap size={18} />}
+          />
+          <QuickStatCard
+            label="Total Clicks"
+            value={totalClicks}
+            icon={<MousePointer size={18} />}
           />
         </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-6 py-8 max-w-6xl">
-        <motion.div
-          className="space-y-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          {/* System Status */}
-          <SystemStatusPanel />
+        {/* Row 2: Main Analytics Panels */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SubscriberPanel />
+          <TelemetryPanel />
+        </div>
 
-          {/* Analytics Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SubscriberPanel />
-            <ClickTrackingPanel />
-          </div>
+        {/* Row 3: Click Tracking */}
+        <ClickTrackingPanel />
 
-          {/* Content Management Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ContentEditor />
-            <OfferEditor />
-          </div>
-        </motion.div>
-      </main>
-    </div>
+        {/* Row 4: Content Management */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ContentEditor />
+          <OfferEditor />
+        </div>
+      </motion.div>
+    </CommandCenterLayout>
   );
 };
 

@@ -38,6 +38,10 @@
     --success: 96 18% 61%;
     --success-foreground: 0 0% 5%;
 
+    /* Cyan-Blue - Data Points */
+    --data: 187 100% 50%;
+    --data-foreground: 0 0% 5%;
+
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 95%;
 
@@ -81,6 +85,8 @@
     --accent-foreground: 0 0% 95%;
     --success: 96 18% 61%;
     --success-foreground: 0 0% 5%;
+    --data: 187 100% 50%;
+    --data-foreground: 0 0% 5%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 95%;
     --border: 0 0% 20%;
@@ -151,6 +157,15 @@
 
   .glow-amber-box {
     box-shadow: 0 0 20px hsl(43 85% 45% / 0.2), 0 0 40px hsl(43 85% 45% / 0.1);
+  }
+
+  /* Cyan-Blue Glow Effect */
+  .glow-cyan {
+    text-shadow: 0 0 10px hsl(187 100% 50% / 0.5), 0 0 20px hsl(187 100% 50% / 0.3);
+  }
+
+  .glow-cyan-box {
+    box-shadow: 0 0 20px hsl(187 100% 50% / 0.2), 0 0 40px hsl(187 100% 50% / 0.1);
   }
 
   /* Status Dot Pulse */

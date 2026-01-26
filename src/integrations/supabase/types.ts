@@ -116,6 +116,36 @@ export type Database = {
         }
         Relationships: []
       }
+      telemetry_events: {
+        Row: {
+          created_at: string | null
+          element_id: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          session_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          element_id?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          element_id?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
