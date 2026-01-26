@@ -99,18 +99,21 @@ export type Database = {
         Row: {
           email: string
           id: string
+          metadata: Json | null
           source: string | null
           subscribed_at: string | null
         }
         Insert: {
           email: string
           id?: string
+          metadata?: Json | null
           source?: string | null
           subscribed_at?: string | null
         }
         Update: {
           email?: string
           id?: string
+          metadata?: Json | null
           source?: string | null
           subscribed_at?: string | null
         }
