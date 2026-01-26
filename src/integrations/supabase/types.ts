@@ -269,6 +269,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_vault_plan: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
