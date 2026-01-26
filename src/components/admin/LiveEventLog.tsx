@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   MousePointer, 
@@ -7,12 +7,19 @@ import {
   LogOut, 
   Mail, 
   Activity,
-  Zap
+  Zap,
+  DollarSign,
+  UserPlus
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusDot } from "@/components/ui/StatusDot";
 import { useLiveEvents } from "@/hooks/useConversionPipeline";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { RealtimeEvent } from "@/hooks/useAdminRealtime";
+
+interface LiveEventLogProps {
+  realtimeEvents?: RealtimeEvent[];
+}
 
 const eventVariants = {
   initial: { opacity: 0, x: -20, height: 0 },
@@ -63,6 +70,27 @@ const getEventConfig = (eventType: string): EventConfig => {
         colorClass: "text-success",
         label: "NEWSLETTER",
       };
+    case "revenue":
+    case "payment.succeeded":
+      return {
+        icon: <DollarSign size={12} />,
+        colorClass: "text-amber-500",
+        label: "REVENUE",
+      };
+    case "membership.activated":
+    case "membership.went_valid":
+      return {
+        icon: <UserPlus size={12} />,
+        colorClass: "text-success",
+        label: "NEW_MEMBER",
+      };
+    case "membership.deactivated":
+    case "membership.went_invalid":
+      return {
+        icon: <LogOut size={12} />,
+        colorClass: "text-destructive",
+        label: "MEMBER_LEFT",
+      };
     default:
       return {
         icon: <Activity size={12} />,
@@ -82,9 +110,25 @@ const formatTimestamp = (timestamp: string): string => {
   });
 };
 
-export const LiveEventLog = () => {
-  const { data: events, isLoading } = useLiveEvents();
+export const LiveEventLog = ({ realtimeEvents = [] }: LiveEventLogProps) => {
+  const { data: polledEvents, isLoading } = useLiveEvents();
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Merge realtime events with polled events, dedupe by id
+  const events = useMemo(() => {
+    const realtimeIds = new Set(realtimeEvents.map((e) => e.id));
+    const filteredPolled = (polledEvents || []).filter(
+      (e) => !realtimeIds.has(e.id)
+    );
+    // Realtime events first (they're the newest), then polled
+    const merged = [...realtimeEvents, ...filteredPolled];
+    // Sort by created_at descending, limit to 20
+    return merged
+      .sort((a, b) => 
+        new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+      )
+      .slice(0, 20);
+  }, [realtimeEvents, polledEvents]);
 
   // Auto-scroll to top when new events arrive
   useEffect(() => {
@@ -141,6 +185,7 @@ export const LiveEventLog = () => {
               const elementDisplay = event.element_id 
                 ? event.element_id.replace(/_/g, ".") 
                 : "—";
+              const isRealtime = "isRealtime" in event && event.isRealtime;
 
               return (
                 <motion.div
@@ -150,7 +195,12 @@ export const LiveEventLog = () => {
                   animate="animate"
                   exit="exit"
                   layout
-                  className="flex items-center gap-2 py-1.5 px-2 rounded hover:bg-muted/30 transition-colors font-mono text-xs"
+                  className={`flex items-center gap-2 py-1.5 px-2 rounded hover:bg-muted/30 transition-colors font-mono text-xs ${
+                    isRealtime ? "ring-1 ring-amber-500/50" : ""
+                  }`}
+                  style={isRealtime ? {
+                    boxShadow: "0 0 8px hsl(45 100% 50% / 0.6)",
+                  } : undefined}
                 >
                   {/* Timestamp */}
                   <span className="text-muted-foreground shrink-0">

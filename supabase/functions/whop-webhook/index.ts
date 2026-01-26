@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
           break;
 
         case "payment.succeeded":
-          console.log("Payment succeeded event logged for analytics");
+          await handlePaymentSucceeded(supabase, payload, eventId);
           break;
 
         case "checkout.completed":
@@ -165,6 +165,79 @@ Deno.serve(async (req) => {
 });
 
 // deno-lint-ignore no-explicit-any
+async function handlePaymentSucceeded(
+  supabase: any,
+  payload: WebhookPayload,
+  eventId: string
+) {
+  const paymentData = payload.data;
+  const amount = (paymentData?.amount as number) || 0;
+  const currency = (paymentData?.currency as string) || "usd";
+  const planId = paymentData?.plan?.id || paymentData?.membership?.plan?.id || null;
+  const userId = paymentData?.user?.id || paymentData?.membership?.user?.id || null;
+
+  console.log(`Processing payment: $${amount / 100} ${currency.toUpperCase()}`);
+
+  // Insert revenue telemetry event
+  const { error: telemetryError } = await supabase
+    .from("telemetry_events")
+    .insert({
+      event_type: "revenue",
+      element_id: eventId,
+      metadata: {
+        amount,
+        currency,
+        plan_id: planId,
+        user_id: userId,
+        timestamp: new Date().toISOString(),
+        raw_event_type: "payment.succeeded",
+      },
+    });
+
+  if (telemetryError) {
+    console.error("Failed to insert revenue telemetry:", telemetryError);
+  } else {
+    console.log("Revenue telemetry event recorded");
+  }
+
+  // Broadcast to admin_updates channel
+  await broadcastToAdminChannel(supabase, "payment.succeeded", {
+    amount,
+    currency,
+    plan_id: planId,
+    user_id: userId,
+    event_id: eventId,
+  });
+}
+
+// deno-lint-ignore no-explicit-any
+async function broadcastToAdminChannel(
+  supabase: any,
+  eventType: string,
+  data: Record<string, unknown>
+) {
+  try {
+    const channel = supabase.channel("admin_updates");
+    
+    await channel.send({
+      type: "broadcast",
+      event: "webhook_event",
+      payload: {
+        id: crypto.randomUUID(),
+        event_type: eventType,
+        element_id: data.event_id || null,
+        metadata: data,
+        created_at: new Date().toISOString(),
+      },
+    });
+
+    console.log(`Broadcasted ${eventType} to admin_updates channel`);
+  } catch (err) {
+    console.error("Failed to broadcast to admin channel:", err);
+  }
+}
+
+// deno-lint-ignore no-explicit-any
 async function handleMembershipActivation(
   supabase: any,
   payload: WebhookPayload
@@ -210,6 +283,12 @@ async function handleMembershipActivation(
     }
 
     console.log(`Added plan ${planId} to user ${whopUserId}`);
+    
+    // Broadcast membership activation
+    await broadcastToAdminChannel(supabase, "membership.activated", {
+      plan_id: planId,
+      whop_user_id: whopUserId,
+    });
   } else {
     console.log(`Plan ${planId} already exists for user ${whopUserId}`);
   }
@@ -261,6 +340,12 @@ async function handleMembershipDeactivation(
     }
 
     console.log(`Removed plan ${planId} from user ${whopUserId}`);
+    
+    // Broadcast membership deactivation
+    await broadcastToAdminChannel(supabase, "membership.deactivated", {
+      plan_id: planId,
+      whop_user_id: whopUserId,
+    });
   } else {
     console.log(`Plan ${planId} was not in user ${whopUserId}'s plan_ids`);
   }
