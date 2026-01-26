@@ -26,53 +26,60 @@ Deno.serve(async (req) => {
     const adminEmail = "andre@swiftautomators.com";
     const adminPassword = "DreBuildsFoundation13";
 
-    // Check if admin already exists in user_roles
-    const { data: existingRoles } = await supabase
-      .from("user_roles")
-      .select("id")
-      .eq("role", "admin")
-      .limit(1);
+    // Check if user already exists by email
+    const { data: users } = await supabase.auth.admin.listUsers();
+    const existingUser = users?.users.find((u: any) => u.email === adminEmail);
 
-    if (existingRoles && existingRoles.length > 0) {
-      console.log("Admin already exists, skipping creation");
+    if (existingUser) {
+      console.log("User exists, updating password...");
+      
+      // Update password to ensure it matches
+      const { error: updateError } = await supabase.auth.admin.updateUserById(
+        existingUser.id,
+        { password: adminPassword, email_confirm: true }
+      );
+
+      if (updateError) {
+        console.error("Password update error:", updateError);
+        throw updateError;
+      }
+
+      console.log("Password updated successfully");
+
+      // Ensure admin role exists (upsert to avoid duplicates)
+      const { error: roleError } = await supabase
+        .from("user_roles")
+        .upsert(
+          { user_id: existingUser.id, role: "admin" },
+          { onConflict: "user_id,role", ignoreDuplicates: true }
+        );
+
+      if (roleError && !roleError.message.includes("duplicate")) {
+        console.error("Role assignment error:", roleError);
+        throw roleError;
+      }
+
+      console.log("Admin role verified");
+
       return new Response(
-        JSON.stringify({ success: true, message: "Admin already configured" }),
+        JSON.stringify({ 
+          success: true, 
+          message: "Admin password reset and role verified",
+          userId: existingUser.id 
+        }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Create the admin user
+    // Create new admin user if doesn't exist
+    console.log("Creating new admin user...");
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: adminEmail,
       password: adminPassword,
-      email_confirm: true, // Auto-confirm email
+      email_confirm: true,
     });
 
     if (authError) {
-      // If user already exists, try to get their ID
-      if (authError.message.includes("already been registered")) {
-        console.log("User exists, fetching user ID...");
-        
-        const { data: users } = await supabase.auth.admin.listUsers();
-        const existingUser = users?.users.find(u => u.email === adminEmail);
-        
-        if (existingUser) {
-          // Assign admin role to existing user
-          const { error: roleError } = await supabase
-            .from("user_roles")
-            .insert({ user_id: existingUser.id, role: "admin" });
-
-          if (roleError && !roleError.message.includes("duplicate")) {
-            throw roleError;
-          }
-
-          console.log("Admin role assigned to existing user");
-          return new Response(
-            JSON.stringify({ success: true, message: "Admin role assigned to existing user" }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-      }
       throw authError;
     }
 
