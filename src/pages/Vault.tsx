@@ -10,7 +10,7 @@ import { Link } from "react-router-dom";
 
 // Configure your Vault Plan ID here
 // This is the Whop Plan ID that grants access to The Builder's Vault
-const VAULT_PLAN_ID = "plan_vault_access"; // TODO: Replace with actual Whop Plan ID
+const VAULT_PLAN_ID = "plan_Os2m8UuDrE3w5"; // Vault Membership plan
 const VAULT_PLAN_NAME = "Builder's Vault Access";
 
 const Vault = () => {

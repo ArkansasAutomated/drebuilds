@@ -44,26 +44,26 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
-// v2 API plans response structure (works with Bot API key)
+// v5 API plans response structure
 interface WhopPlan {
   id: string;
-  company_id: string;
-  product: string;
+  company: { id: string; title: string };
+  product: { id: string; title: string };
   plan_type: string;
   visibility: string;
   billing_period: number | null;
   initial_price: number;
   renewal_price: number | null;
+  title: string | null;
   description: string | null;
-  direct_link: string;
+  purchase_url: string;
 }
 
 interface WhopPlansResponse {
   data: WhopPlan[];
-  pagination?: {
-    current_page: number;
-    total_page: number;
-    total_count: number;
+  page_info?: {
+    has_next_page: boolean;
+    end_cursor: string | null;
   };
 }
 
@@ -106,9 +106,9 @@ Deno.serve(async (req) => {
     if (req.method === "GET" && path === "plans") {
       console.log("[whop-products] Fetching plans for company:", WHOP_COMPANY_ID);
 
-      // Use v2 API which works with Bot API key
+      // Use v5 API for proper plan data including product titles
       const response = await fetch(
-        `https://api.whop.com/api/v2/plans?company_id=${WHOP_COMPANY_ID}`,
+        `https://api.whop.com/api/v5/plans?company_id=${WHOP_COMPANY_ID}`,
         {
           method: "GET",
           headers: {
@@ -134,12 +134,12 @@ Deno.serve(async (req) => {
         .filter((plan) => plan.visibility === "visible")
         .map((plan) => ({
           id: plan.id,
-          name: plan.description || `Plan ${plan.id}`,
-          description: plan.description,
+          name: plan.product?.title || plan.title || plan.description || `Plan ${plan.id}`,
+          description: plan.description || '',
           price: plan.initial_price / 100, // Convert cents to dollars
           renewal_price: plan.renewal_price ? plan.renewal_price / 100 : null,
           billing_period: plan.billing_period,
-          direct_link: plan.direct_link,
+          direct_link: plan.purchase_url,
         }));
 
       return new Response(JSON.stringify({ plans }), {
@@ -199,12 +199,12 @@ Deno.serve(async (req) => {
         const errorText = await checkoutResponse.text();
         console.error("[whop-products] Checkout config creation failed:", checkoutResponse.status, errorText);
         
-        // Fallback: If checkout_configurations fails, try using the plan's direct_link
-        // Fetch the plan to get its direct_link
-        console.log("[whop-products] Attempting fallback to direct_link...");
+        // Fallback: If checkout_configurations fails, try using the plan's purchase_url
+        // Fetch the plan to get its purchase_url
+        console.log("[whop-products] Attempting fallback to purchase_url...");
         
         const planResponse = await fetch(
-          `https://api.whop.com/api/v2/plans/${plan_id}`,
+          `https://api.whop.com/api/v5/plans/${plan_id}`,
           {
             method: "GET",
             headers: {
@@ -215,11 +215,11 @@ Deno.serve(async (req) => {
 
         if (planResponse.ok) {
           const planData = await planResponse.json();
-          if (planData.direct_link) {
-            console.log("[whop-products] Using plan direct_link as fallback");
+          if (planData.purchase_url) {
+            console.log("[whop-products] Using plan purchase_url as fallback");
             return new Response(
               JSON.stringify({
-                checkout_url: planData.direct_link,
+                checkout_url: planData.purchase_url,
                 session_id: `fallback_${plan_id}`,
               }),
               { headers: { ...corsHeaders, "Content-Type": "application/json" } }
