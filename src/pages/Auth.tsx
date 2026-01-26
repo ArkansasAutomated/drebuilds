@@ -204,8 +204,8 @@ const Auth = () => {
           {/* Whop OAuth Button */}
           <TextSwapButton
             type="button"
-            defaultText="Connect with Whop"
-            hoverText="whop.oauth()"
+            defaultText="[ CONNECT_WHOP ]"
+            hoverText="> run oauth.sh"
             variant="outline"
             size="md"
             className="w-full"
