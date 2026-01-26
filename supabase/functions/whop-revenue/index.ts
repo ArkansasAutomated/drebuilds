@@ -98,14 +98,13 @@ Deno.serve(async (req) => {
 
     console.log(`[whop-revenue] Fetching payments since ${thirtyDaysAgo.toISOString()}`);
 
-    // Fetch payments from Whop API
+    // Fetch payments from Whop API using v2 endpoint (works with Bot API key)
     const response = await fetch(
-      `https://api.whop.com/api/v5/company/payments?created_after=${createdAfter}&status=paid&per_page=100`,
+      `https://api.whop.com/api/v2/payments?company_id=${WHOP_COMPANY_ID}&status=paid&per_page=100`,
       {
         method: "GET",
         headers: {
           Authorization: `Bearer ${WHOP_API_KEY}`,
-          "Content-Type": "application/json",
         },
       }
     );

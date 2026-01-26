@@ -27,14 +27,18 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
+// v2 API plans response structure (works with Bot API key)
 interface WhopPlan {
   id: string;
-  name: string;
-  description: string | null;
+  company_id: string;
+  product: string;
+  plan_type: string;
+  visibility: string;
+  billing_period: number | null;
   initial_price: number;
   renewal_price: number | null;
-  billing_period: string | null;
-  visibility: string;
+  description: string | null;
+  direct_link: string;
 }
 
 interface WhopPlansResponse {
@@ -42,6 +46,7 @@ interface WhopPlansResponse {
   pagination?: {
     current_page: number;
     total_page: number;
+    total_count: number;
   };
 }
 
@@ -81,13 +86,13 @@ Deno.serve(async (req) => {
     if (req.method === "GET" && path === "plans") {
       console.log("[whop-products] Fetching plans for company:", WHOP_COMPANY_ID);
 
+      // Use v2 API which works with Bot API key
       const response = await fetch(
-        `https://api.whop.com/api/v5/company/plans`,
+        `https://api.whop.com/api/v2/plans?company_id=${WHOP_COMPANY_ID}`,
         {
           method: "GET",
           headers: {
             Authorization: `Bearer ${WHOP_API_KEY}`,
-            "Content-Type": "application/json",
           },
         }
       );
@@ -96,7 +101,7 @@ Deno.serve(async (req) => {
         const errorText = await response.text();
         console.error("[whop-products] Whop API error:", response.status, errorText);
         return new Response(
-          JSON.stringify({ error: "Failed to fetch plans from Whop" }),
+          JSON.stringify({ error: "Failed to fetch plans from Whop", details: errorText }),
           { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -109,11 +114,12 @@ Deno.serve(async (req) => {
         .filter((plan) => plan.visibility === "visible")
         .map((plan) => ({
           id: plan.id,
-          name: plan.name,
+          name: plan.description || `Plan ${plan.id}`,
           description: plan.description,
           price: plan.initial_price / 100, // Convert cents to dollars
           renewal_price: plan.renewal_price ? plan.renewal_price / 100 : null,
           billing_period: plan.billing_period,
+          direct_link: plan.direct_link,
         }));
 
       return new Response(JSON.stringify({ plans }), {
