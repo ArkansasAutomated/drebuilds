@@ -1,141 +1,115 @@
 
 
-# Whop Webhooks Integration via n8n
+# Final Handshake Build - Routing Stability & Real-Time Revenue Tracking
 
-## Overview
+## Current State Analysis
 
-Create a `whop-webhook` Edge Function to receive forwarded Whop events from your n8n workflow. The n8n workflow will receive webhooks from Whop, validate the signature using `WHOP_WEBHOOK_KEY`, and forward valid payloads to the Edge Function for processing.
+After thorough exploration, I found:
 
----
+**Routing (ALREADY CORRECT)**
+- `src/App.tsx` is already using `HashRouter` (line 5, 20)
+- `src/hooks/useWhopUser.ts` has the correct redirect URI: `https://drebuilds.online/#/auth/whop/callback` (line 57)
+- `src/pages/WhopCallback.tsx` also has the correct redirect URI (line 10)
+- `whop-oauth` Edge Function validates against `https://drebuilds.online/#/auth/whop/callback` (line 45)
 
-## Architecture Flow
+**Webhook Processor (PARTIALLY COMPLETE)**
+- `whop-webhook` Edge Function exists and handles membership events
+- Missing: Revenue event insertion into `telemetry_events`
+- Missing: Supabase Realtime broadcasting to frontend
 
-```text
-┌─────────────────────┐                 ┌────────────────────────┐
-│   Whop Platform     │   POST event    │   n8n Workflow         │
-│   (webhook sender)  │────────────────▶│   (Whop Event Webhook) │
-└─────────────────────┘                 └────────────────────────┘
-                                                 │
-                                                 │ Validate Signature
-                                                 │ (Standard Webhooks)
-                                                 ▼
-                                        ┌────────────────────────┐
-                                        │   HTTP Request Node    │
-                                        │   POST to Edge Function│
-                                        └────────────────────────┘
-                                                 │
-                                                 ▼
-                                        ┌────────────────────────┐
-                                        │  whop-webhook          │
-                                        │  Edge Function         │
-                                        │  • Process events      │
-                                        │  • Update database     │
-                                        └────────────────────────┘
-```
+**Admin UI**
+- `LiveEventLog.tsx` uses polling (5s interval) via `useLiveEvents` hook
+- Missing: Real-time subscription to `admin_updates` channel
+- `RevenuePanel.tsx` fetches from `whop-revenue` Edge Function (30-day aggregated data)
+
+**Current Issues**
+- Console shows `whop-products/plans` Edge Function failing with "Failed to fetch"
+- No logs for `whop-webhook` (never been called yet)
 
 ---
 
-## Implementation Steps
+## Implementation Plan
 
-### Step 1: Create Database Table for Event Logging
+### Step 1: Add ScrollToTop Component
 
-A `webhook_events` table stores all incoming events for auditing and deduplication.
+Create a scroll reset helper that resets Lenis/window scroll position on HashRouter navigation.
 
-**Schema:**
+**File:** `src/components/ScrollToTop.tsx`
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | Primary key |
-| event_id | TEXT | Whop's unique event ID (prevents duplicates) |
-| event_type | TEXT | Event type (e.g., `payment.succeeded`) |
-| resource_id | TEXT | ID of affected resource |
-| payload | JSONB | Full webhook payload |
-| processed | BOOLEAN | Whether event was handled |
-| error_message | TEXT | Error details if failed |
-| created_at | TIMESTAMP | When received |
-
-**RLS Policies:**
-- Admin-only SELECT for viewing logs
-- No INSERT policy needed (uses service role from Edge Function)
+**Logic:**
+- Listen to `location` changes from `useLocation()`
+- On route change, reset `window.scrollTo(0, 0)`
+- Integrate into `App.tsx` inside `HashRouter`
 
 ---
 
-### Step 2: Create `whop-webhook` Edge Function
+### Step 2: Enhance Webhook Processor for Revenue Events
 
-**File:** `supabase/functions/whop-webhook/index.ts`
+Update `supabase/functions/whop-webhook/index.ts` to:
 
-This function will:
-1. Accept POST requests from n8n (with a shared secret for verification)
-2. Check for duplicate events using `event_id`
-3. Route to appropriate handler based on event type
-4. Update `whop_users.plan_ids` for membership events
-5. Log all events to `webhook_events` table
+1. **Insert REVENUE telemetry events** when `payment.succeeded` is received:
+   - Insert into `telemetry_events` table with:
+     - `event_type: 'revenue'`
+     - `element_id: payment.id`
+     - `metadata: { amount, currency, plan_id, user_id, timestamp }`
 
-**Security:**
-- Validates `x-webhook-secret` header matches `WHOP_WEBHOOK_KEY`
-- No CORS needed (server-to-server communication)
-- Rate limiting via n8n (no browser access)
+2. **Broadcast to Realtime channel** after each event:
+   - Use `supabase.channel('admin_updates').send()` to push events
+   - Include event type, data summary, and timestamp
 
-**Event Handlers:**
+**Event Handler Updates:**
 
 | Event Type | Action |
 |------------|--------|
-| `payment.succeeded` | Log payment event |
-| `membership.activated` | Add `plan_id` to user's `plan_ids` array |
-| `membership.deactivated` | Remove `plan_id` from `plan_ids` array |
-| `membership.went_valid` | Same as activated |
-| `membership.went_invalid` | Same as deactivated |
-| `checkout.completed` | Log checkout for analytics |
+| `payment.succeeded` | Insert telemetry event + broadcast |
+| `membership.activated` | Update plan_ids + broadcast |
+| `membership.deactivated` | Update plan_ids + broadcast |
 
 ---
 
-### Step 3: Update n8n Workflow
+### Step 3: Add Real-Time Subscription to Admin Dashboard
 
-Add nodes to your existing workflow:
+Create a new hook: `src/hooks/useAdminRealtime.ts`
 
-1. **IF Node**: Check if webhook-signature is valid (n8n can validate Standard Webhooks)
-2. **HTTP Request Node**: POST to Edge Function with:
-   - URL: `https://abtfccajohyxameotemf.supabase.co/functions/v1/whop-webhook`
-   - Header: `x-webhook-secret: {{WHOP_WEBHOOK_KEY}}`
-   - Body: Forward the entire Whop payload
+**Logic:**
+- Subscribe to `admin_updates` Supabase Realtime channel
+- On message received:
+  - Prepend to LiveEventLog with glowing Amber animation
+  - Trigger refetch of revenue data if event is `revenue` type
+  - Show toast notification for significant events
 
----
-
-### Step 4: Update `supabase/config.toml`
-
-Add the new function configuration:
-
-```toml
-[functions.whop-webhook]
-verify_jwt = false
-```
+**Integration:**
+- Call hook in `AdminDashboard` component
+- Pass new events to `LiveEventLog` via context or prop
 
 ---
 
-## Detailed Edge Function Logic
+### Step 4: Update LiveEventLog for Real-Time Events
 
-### Membership Plan Updates
+Modify `src/components/admin/LiveEventLog.tsx`:
 
-When a membership event is received, the function will:
+1. Accept optional `realtimeEvents` prop for pushed events
+2. Merge with polled events, deduplicate by ID
+3. Add glowing Amber animation for new real-time events:
+   ```css
+   @keyframes amber-glow {
+     0%, 100% { box-shadow: 0 0 4px #FFBF00; }
+     50% { box-shadow: 0 0 12px #FFBF00; }
+   }
+   ```
+4. Auto-dismiss glow after 3 seconds
 
-1. Extract `membership.user.id` (Whop user ID) and `membership.plan.id` (Plan ID)
-2. Query `whop_users` by `whop_user_id`
-3. For activation: Use Postgres array append if plan not already present
-4. For deactivation: Use Postgres array remove to delete the plan
+---
 
-**SQL Pattern for Updates:**
+### Step 5: Enable Realtime on webhook_events Table
+
+Run a migration to enable Supabase Realtime on the `webhook_events` table:
+
 ```sql
--- Add plan_id (activation)
-UPDATE whop_users 
-SET plan_ids = array_append(plan_ids, 'new_plan_id')
-WHERE whop_user_id = 'xxx' 
-  AND NOT ('new_plan_id' = ANY(plan_ids));
-
--- Remove plan_id (deactivation)
-UPDATE whop_users 
-SET plan_ids = array_remove(plan_ids, 'old_plan_id')
-WHERE whop_user_id = 'xxx';
+ALTER PUBLICATION supabase_realtime ADD TABLE public.webhook_events;
 ```
+
+This allows the frontend to subscribe to database changes directly.
 
 ---
 
@@ -143,113 +117,103 @@ WHERE whop_user_id = 'xxx';
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `supabase/functions/whop-webhook/index.ts` | Create | Webhook event processor |
-| `supabase/config.toml` | Modify | Add function config |
-| Migration SQL | Create | `webhook_events` table + RLS |
-
----
-
-## n8n Workflow Updates
-
-After deployment, update your n8n workflow to add:
-
-1. **Crypto Node** (or Code Node): Validate Standard Webhooks signature using `WHOP_WEBHOOK_KEY`
-2. **HTTP Request Node**: Forward valid events to the Edge Function
-
-**Webhook Validation Logic (for n8n Code Node):**
-```javascript
-// Standard Webhooks signature validation
-const crypto = require('crypto');
-
-const webhookId = $input.headers['webhook-id'];
-const timestamp = $input.headers['webhook-timestamp'];
-const signature = $input.headers['webhook-signature'];
-const body = JSON.stringify($input.body);
-
-// Check timestamp (reject if > 5 min old)
-const now = Math.floor(Date.now() / 1000);
-if (Math.abs(now - parseInt(timestamp)) > 300) {
-  throw new Error('Webhook timestamp too old');
-}
-
-// Compute expected signature
-const signedPayload = `${webhookId}.${timestamp}.${body}`;
-const secret = Buffer.from(webhookKey, 'base64');
-const expectedSig = crypto
-  .createHmac('sha256', secret)
-  .update(signedPayload)
-  .digest('base64');
-
-// Compare (v1 prefix in signature header)
-const sigParts = signature.split(' ');
-const isValid = sigParts.some(s => s.startsWith('v1,') && s.slice(3) === expectedSig);
-
-return { isValid, payload: $input.body };
-```
-
----
-
-## Whop Dashboard Configuration
-
-Configure the webhook in Whop dashboard to point to your n8n URL:
-
-**Webhook URL:** `https://n8n.srv1020587.hstgr.cloud/webhook/04426f25-847d-4ce7-b43f-7e95e780f2c8`
-
-**Events to Enable:**
-- `payment.succeeded`
-- `membership.activated`
-- `membership.deactivated`
-- `membership.went_valid`
-- `membership.went_invalid`
-- `checkout.completed`
-
----
-
-## Verification Steps
-
-After implementation:
-
-1. Deploy the Edge Function
-2. Update n8n workflow with HTTP Request node
-3. Configure Whop webhook in dashboard pointing to n8n
-4. Trigger a test event (test purchase or membership change)
-5. Check `webhook_events` table for logged event
-6. Verify `whop_users.plan_ids` updates correctly
+| `src/components/ScrollToTop.tsx` | Create | Reset scroll on route change |
+| `src/App.tsx` | Modify | Add ScrollToTop component |
+| `supabase/functions/whop-webhook/index.ts` | Modify | Add revenue telemetry + broadcast |
+| `src/hooks/useAdminRealtime.ts` | Create | Real-time subscription hook |
+| `src/components/admin/LiveEventLog.tsx` | Modify | Support real-time events + glow |
+| `src/pages/Admin.tsx` | Modify | Integrate real-time hook |
+| Migration SQL | Create | Enable realtime on webhook_events |
 
 ---
 
 ## Technical Details
 
-### Edge Function Header Validation
+### ScrollToTop Component
 
 ```typescript
-// Verify request is from n8n with shared secret
-const webhookSecret = req.headers.get("x-webhook-secret");
-const expectedSecret = Deno.env.get("WHOP_WEBHOOK_KEY");
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
-if (!webhookSecret || webhookSecret !== expectedSecret) {
-  console.warn("Invalid webhook secret");
-  return new Response(
-    JSON.stringify({ error: "Unauthorized" }),
-    { status: 401 }
-  );
-}
+export const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+};
 ```
 
-### Plan ID Management
+### Realtime Broadcasting in Edge Function
 
-The `has_vault_plan()` function already checks for `plan_vault_access` in `plan_ids`:
-
-```sql
-EXISTS (
-  SELECT 1 FROM public.whop_users 
-  WHERE user_id = _user_id 
-  AND 'plan_vault_access' = ANY(plan_ids)
-)
+```typescript
+// After processing event, broadcast to admin channel
+await supabase.channel('admin_updates').send({
+  type: 'broadcast',
+  event: 'webhook_event',
+  payload: {
+    event_type: eventType,
+    resource_id: resourceId,
+    timestamp: new Date().toISOString(),
+    summary: getSummary(eventType, payload),
+  },
+});
 ```
 
-When you configure a vault-access plan in Whop, you'll need to:
-1. Note the Plan ID from Whop dashboard
-2. The webhook will automatically add/remove this ID from `plan_ids`
-3. Update `has_vault_plan()` to check for your specific plan ID if needed
+### Admin Realtime Hook
+
+```typescript
+export const useAdminRealtime = () => {
+  const [realtimeEvents, setRealtimeEvents] = useState([]);
+  
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin_updates')
+      .on('broadcast', { event: 'webhook_event' }, (payload) => {
+        setRealtimeEvents(prev => [payload.payload, ...prev.slice(0, 19)]);
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  return { realtimeEvents };
+};
+```
+
+---
+
+## Verification Checklist
+
+After implementation:
+
+1. **Routing Test**
+   - Navigate directly to `https://drebuilds.online/#/admin`
+   - Navigate directly to `https://drebuilds.online/#/auth`
+   - Confirm no 404 errors
+
+2. **Whop Dashboard Verification**
+   - Confirm Redirect URI is set to `https://drebuilds.online/#/auth/whop/callback`
+
+3. **Webhook Test**
+   - Configure Whop webhook to point to n8n
+   - Trigger a test payment
+   - Verify event appears in LiveEventLog with Amber glow
+
+4. **Revenue HUD Test**
+   - Confirm RevenuePanel updates after payment webhook
+
+---
+
+## Post-Deployment Configuration
+
+### Whop Dashboard
+- **Redirect URI:** `https://drebuilds.online/#/auth/whop/callback`
+- **Webhook URL:** Your n8n endpoint
+
+### n8n Workflow
+- Forward validated webhooks to: `https://abtfccajohyxameotemf.supabase.co/functions/v1/whop-webhook`
+- Include header: `x-webhook-secret: {{WHOP_WEBHOOK_KEY}}`
 
