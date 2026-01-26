@@ -14,6 +14,20 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    
+    // Get admin credentials from secrets (not hardcoded)
+    const adminEmail = Deno.env.get("ADMIN_EMAIL");
+    const adminPassword = Deno.env.get("ADMIN_PASSWORD");
+    
+    if (!adminEmail || !adminPassword) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "ADMIN_EMAIL and ADMIN_PASSWORD secrets must be configured" 
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Create admin client with service role
     const supabase = createClient(supabaseUrl, serviceRoleKey, {
@@ -22,9 +36,6 @@ Deno.serve(async (req) => {
         persistSession: false,
       },
     });
-
-    const adminEmail = "andre@swiftautomators.com";
-    const adminPassword = "DreBuildsFoundation13";
 
     // Check if user already exists by email
     const { data: users } = await supabase.auth.admin.listUsers();
