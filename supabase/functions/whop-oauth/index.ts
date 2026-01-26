@@ -5,18 +5,71 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Simple in-memory rate limiting (resets on function restart)
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_MAX = 10;
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
+
+const isRateLimited = (ip: string): boolean => {
+  const now = Date.now();
+  const record = rateLimitMap.get(ip);
+  
+  if (!record || now > record.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+  
+  record.count++;
+  if (record.count > RATE_LIMIT_MAX) {
+    return true;
+  }
+  return false;
+};
+
+// Expected redirect URI for validation
+const EXPECTED_REDIRECT_URI = "https://drebuilds.online/auth/whop/callback";
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Rate limiting check
+  const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  
+  if (isRateLimited(clientIp)) {
+    console.warn(`Rate limit exceeded for IP: ${clientIp}`);
+    return new Response(
+      JSON.stringify({ success: false, error: "Too many requests. Please try again later." }),
+      { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
   try {
     const { code, redirect_uri } = await req.json();
+
+    // Security logging
+    console.log({
+      timestamp: new Date().toISOString(),
+      ip: clientIp,
+      action: "whop_oauth_attempt",
+      has_code: !!code,
+      redirect_uri: redirect_uri,
+    });
 
     if (!code) {
       return new Response(
         JSON.stringify({ success: false, error: "Authorization code is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate redirect_uri matches expected value
+    if (redirect_uri && redirect_uri !== EXPECTED_REDIRECT_URI) {
+      console.warn(`Invalid redirect_uri attempt: ${redirect_uri}`);
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid redirect URI" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
