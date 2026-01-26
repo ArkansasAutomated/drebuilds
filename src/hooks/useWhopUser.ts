@@ -2,6 +2,29 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
+// Interface for data from whop_users_safe view (excludes tokens)
+interface WhopUserSafe {
+  id: string;
+  user_id: string;
+  whop_user_id: string;
+  company_ids: string[] | null;
+  plan_ids: string[] | null;
+  username: string | null;
+  email: string | null;
+  profile_pic_url: string | null;
+  metadata: {
+    plan_ids?: string[];
+    memberships?: Array<{
+      company_id?: string;
+      plan_id?: string;
+      [key: string]: unknown;
+    }>;
+    last_synced?: string;
+  } | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
 interface WhopUser {
   whop_user_id: string;
   username: string | null;
@@ -56,33 +79,46 @@ export const useWhopUser = () => {
     }
 
     try {
-      const { data, error } = await supabase
-        .from("whop_users")
+      // Use the safe view that excludes tokens
+      // Cast to any since view isn't in generated types
+      const { data: rawData, error } = await supabase
+        .from("whop_users_safe" as any)
         .select("*")
         .eq("user_id", user.id)
-        .maybeSingle();
+        .maybeSingle() as { data: WhopUserSafe | null; error: any };
 
       if (error) {
         console.error("Error fetching Whop user:", error);
         setState(prev => ({
           ...prev,
           isLoading: false,
-          error: error as unknown as Error,
+          error: error as Error,
         }));
         return;
       }
 
+      // Transform to WhopUser interface
+      const whopUserData: WhopUser | null = rawData ? {
+        whop_user_id: rawData.whop_user_id,
+        username: rawData.username,
+        email: rawData.email,
+        profile_pic_url: rawData.profile_pic_url,
+        company_ids: rawData.company_ids || [],
+        plan_ids: rawData.plan_ids || [],
+        metadata: rawData.metadata,
+      } : null;
+
       // Check if user has admin company access
-      const hasAdminAccess = data?.company_ids?.includes(WHOP_COMPANY_ID) || false;
+      const hasAdminAccess = whopUserData?.company_ids?.includes(WHOP_COMPANY_ID) || false;
 
       // Helper function to check plan access
       const hasPlan = (planId: string): boolean => {
-        if (!data) return false;
-        return data.plan_ids?.includes(planId) || false;
+        if (!whopUserData) return false;
+        return whopUserData.plan_ids?.includes(planId) || false;
       };
 
       setState({
-        whopUser: data as WhopUser | null,
+        whopUser: whopUserData,
         isLoading: false,
         isWhopAdmin: hasAdminAccess,
         hasPlan,

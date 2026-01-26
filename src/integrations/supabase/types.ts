@@ -259,7 +259,48 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      whop_users_safe: {
+        Row: {
+          company_ids: string[] | null
+          created_at: string | null
+          email: string | null
+          id: string | null
+          metadata: Json | null
+          plan_ids: string[] | null
+          profile_pic_url: string | null
+          updated_at: string | null
+          user_id: string | null
+          username: string | null
+          whop_user_id: string | null
+        }
+        Insert: {
+          company_ids?: string[] | null
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          metadata?: Json | null
+          plan_ids?: string[] | null
+          profile_pic_url?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          username?: string | null
+          whop_user_id?: string | null
+        }
+        Update: {
+          company_ids?: string[] | null
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          metadata?: Json | null
+          plan_ids?: string[] | null
+          profile_pic_url?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          username?: string | null
+          whop_user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
