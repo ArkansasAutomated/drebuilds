@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // POST /checkout - Create checkout session
+    // POST /checkout - Create checkout configuration (proper SDK pattern)
     if (req.method === "POST" && path === "checkout") {
       const authHeader = req.headers.get("Authorization");
       
@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
       }
 
       const body = await req.json();
-      const { plan_id, redirect_url } = body;
+      const { plan_id, redirect_url, price, plan_type } = body;
 
       if (!plan_id) {
         return new Response(
@@ -154,11 +154,12 @@ Deno.serve(async (req) => {
         );
       }
 
-      console.log(`[whop-products] Creating checkout for plan: ${plan_id}, user: ${userId || "anonymous"}`);
+      console.log(`[whop-products] Creating checkout config for plan: ${plan_id}, user: ${userId || "anonymous"}`);
 
-      // Create checkout configuration using Whop API
+      // Use checkoutConfigurations.create pattern from Whop SDK
+      // This creates a checkout configuration that returns a purchase URL
       const checkoutResponse = await fetch(
-        "https://api.whop.com/api/v5/checkout_sessions",
+        "https://api.whop.com/api/v5/checkout_configurations",
         {
           method: "POST",
           headers: {
@@ -166,6 +167,7 @@ Deno.serve(async (req) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
+            company_id: WHOP_COMPANY_ID,
             plan_id: plan_id,
             redirect_url: redirect_url || "https://drebuilds.online/vault",
             metadata: userId ? { supabase_user_id: userId } : undefined,
@@ -175,19 +177,48 @@ Deno.serve(async (req) => {
 
       if (!checkoutResponse.ok) {
         const errorText = await checkoutResponse.text();
-        console.error("[whop-products] Checkout creation failed:", checkoutResponse.status, errorText);
+        console.error("[whop-products] Checkout config creation failed:", checkoutResponse.status, errorText);
+        
+        // Fallback: If checkout_configurations fails, try using the plan's direct_link
+        // Fetch the plan to get its direct_link
+        console.log("[whop-products] Attempting fallback to direct_link...");
+        
+        const planResponse = await fetch(
+          `https://api.whop.com/api/v2/plans/${plan_id}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${WHOP_API_KEY}`,
+            },
+          }
+        );
+
+        if (planResponse.ok) {
+          const planData = await planResponse.json();
+          if (planData.direct_link) {
+            console.log("[whop-products] Using plan direct_link as fallback");
+            return new Response(
+              JSON.stringify({
+                checkout_url: planData.direct_link,
+                session_id: `fallback_${plan_id}`,
+              }),
+              { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+        }
+
         return new Response(
-          JSON.stringify({ error: "Failed to create checkout session" }),
+          JSON.stringify({ error: "Failed to create checkout configuration", details: errorText }),
           { status: checkoutResponse.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
       const checkoutData = await checkoutResponse.json();
-      console.log("[whop-products] Checkout session created:", checkoutData.id);
+      console.log("[whop-products] Checkout configuration created:", checkoutData.id);
 
       return new Response(
         JSON.stringify({
-          checkout_url: checkoutData.purchase_url || checkoutData.url,
+          checkout_url: checkoutData.purchase_url || checkoutData.url || checkoutData.checkout_url,
           session_id: checkoutData.id,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
