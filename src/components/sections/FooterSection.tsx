@@ -11,9 +11,8 @@ const springConfig = {
 
 const navLinks = [
   { path: "~/home", label: "Home", href: "/" },
-  { path: "~/consulting", label: "Consulting", href: "#consulting" },
-  { path: "~/community", label: "Community", href: "#community" },
-  { path: "~/store", label: "Store", href: "#store" },
+  { path: "~/vault", label: "Vault", href: "/vault" },
+  { path: "~/auth", label: "Login", href: "/auth" },
 ];
 
 const socialLinks = [

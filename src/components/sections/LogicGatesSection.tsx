@@ -32,6 +32,7 @@ const defaultOffers = [
     defaultCTA: "Book Architecture Session",
     hoverCTA: "initialize_consult()",
     accent: "Consulting",
+    link: "https://cal.com/drebuilds",
   },
   {
     id: "community",
@@ -42,6 +43,7 @@ const defaultOffers = [
     defaultCTA: "Join the Builders",
     hoverCTA: "git clone community",
     accent: "Community",
+    link: "https://whop.com/drebuilds/",
   },
   {
     id: "store",
@@ -52,6 +54,7 @@ const defaultOffers = [
     defaultCTA: "Enter Store",
     hoverCTA: "cat ./inventory",
     accent: "Store",
+    link: "https://whop.com/drebuilds/",
   },
   {
     id: "learn",
@@ -62,6 +65,7 @@ const defaultOffers = [
     defaultCTA: "Learn Automation",
     hoverCTA: "man automation",
     accent: "Learn",
+    link: "https://youtube.com/@drebuilds",
   },
 ];
 
@@ -124,7 +128,7 @@ export const LogicGatesSection = () => {
       price: whopPlan ? `$${whopPlan.price}` : (dbOffer?.price || defaultOffer.price),
       icon: iconMap[defaultOffer.id] || Cpu,
       whopPlanId: whopPlanId || null,
-      link: dbOffer?.link || null,
+      link: dbOffer?.link || defaultOffer.link,
     };
   });
 
@@ -146,7 +150,7 @@ export const LogicGatesSection = () => {
   };
 
   return (
-    <section className="relative py-24 md:py-32">
+    <section id="logic-gates" className="relative py-24 md:py-32">
       <div className="container mx-auto px-6 max-w-6xl">
         <motion.div
           className="section-label mb-4"
