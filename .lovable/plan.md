@@ -1,307 +1,210 @@
 
-# Phase 4: Dynamic Commerce and Content Gating
+# Bug Diagnosis and Fix Plan
 
-## Overview
-This phase implements three major features:
-1. **The Product Sync** - Fetch Whop plans dynamically and generate checkout sessions
-2. **The Builder's Vault** - A gated content page with membership-based access control
-3. **Revenue Telemetry** - Admin dashboard with payment visualization
+## Summary of Issues Found
+
+I've identified **three main categories of bugs** that need to be addressed:
 
 ---
 
-## Task 1: The Product Sync
+## Bug 1: Whop OAuth Token Exchange Failure
 
-### New Edge Function: `whop-products`
-Create a dedicated Edge Function to handle Whop product operations.
+**Error Message:** `TOKEN_ENCRYPTION_KEY must be a 64-character hex string (32 bytes)`
 
-**File:** `supabase/functions/whop-products/index.ts`
+**Root Cause:** While the `TOKEN_ENCRYPTION_KEY` secret exists in the project configuration (verified it's listed), the whop-oauth Edge Function is rejecting it because the validation check requires exactly 64 hex characters. The provided key may not be formatted correctly as a 64-character hex string.
 
-**Capabilities:**
-- `GET /plans` - Fetch active plans from Whop API using company_id
-- `POST /checkout` - Generate dynamic checkout session using `checkoutConfigurations.create`
-
-**Implementation:**
-```text
-+---------------------------+
-|   whop-products function  |
-+---------------------------+
-|  GET: List company plans  |
-|  - Uses WHOP_API_KEY      |
-|  - Returns plan details   |
-|    (id, name, price, desc)|
-+---------------------------+
-|  POST: Create checkout    |
-|  - Receives plan_id       |
-|  - Creates checkout config|
-|  - Returns checkout_url   |
-+---------------------------+
+**Edge Function Logs Show:**
+```
+2026-01-26T18:44:19Z ERROR TOKEN_ENCRYPTION_KEY must be a 64-character hex string (32 bytes)
 ```
 
-### Update LogicGatesSection.tsx
-
-**Changes:**
-- Add `useQuery` hook to fetch Whop plans from the new Edge Function
-- Map `initial_price` and `description` from Whop API to UI cards
-- Replace static `TextSwapButton` with checkout-enabled version
-- On click: Call Edge Function to generate checkout session, then redirect
-
-**Data Flow:**
-```text
-LogicGatesSection
-      |
-      v
-[useQuery: whop-products/plans]
-      |
-      v
-[Map: whop_plan -> UI card]
-      |
-      v
-[onClick: POST /checkout]
-      |
-      v
-[Redirect: checkout_url]
-```
-
-### Hook: `useWhopProducts`
-Create a new hook for fetching and managing Whop products.
-
-**File:** `src/hooks/useWhopProducts.ts`
-
-**Returns:**
-- `plans` - Array of Whop plans with pricing
-- `isLoading` - Loading state
-- `createCheckout(planId)` - Function to generate checkout session
+**Fix:** 
+- Regenerate a properly formatted 64-character hex key
+- Update the `TOKEN_ENCRYPTION_KEY` secret with the corrected value
+- The Edge Function validation at lines 161-167 in `whop-oauth/index.ts` expects: `encryptionKey.length === 64`
 
 ---
 
-## Task 2: The Builder's Vault (Gated UI)
+## Bug 2: SPA Routing Not Working on Deployment
 
-### New Page: `/vault`
+**Symptoms:** Routes like `/admin`, `/auth`, `/vault` redirect to root domain on the deployed site
 
-**File:** `src/pages/Vault.tsx`
+**Root Cause:** Missing SPA fallback configuration. When users navigate directly to `/admin` or refresh on that page, the server looks for a physical `/admin/index.html` file which doesn't exist, causing a redirect to `/` or a 404.
 
-**Access Logic:**
-```text
-User visits /vault
-      |
-      v
-[Check: useWhopUser().hasPlan(VAULT_PLAN_ID)]
-      |
-      +---> YES --> Display Asset Grid
-      |
-      +---> NO  --> Display Locked Terminal
-```
-
-### Unlocked State: Asset Grid
-
-**Design (Technical Brutalist):**
-- High-density grid of downloadable assets
-- Categories: Blueprints, Code Snippets, Templates
-- Each card shows: Title, Description, File Type, Download button
-- Download button triggers telemetry event via `useTelemetry`
-
-**Component Structure:**
-```text
-src/components/vault/
-  ├── VaultAssetGrid.tsx      # Main grid container
-  ├── VaultAssetCard.tsx      # Individual asset card
-  └── VaultLockedState.tsx    # Locked terminal overlay
-```
-
-### Locked State: Terminal Overlay
-
-**Design:**
-- Blurred background showing the asset grid (teaser)
-- Terminal-style overlay with:
-  - Header: `> ACCESS_RESTRICTED`
-  - Message: `Upgrade to [Plan Name] to unlock The Builder's Vault`
-  - CTA Button: "Upgrade Now" -> triggers checkout flow
-- Electric Amber accents consistent with admin dashboard
-
-### Database: `vault_assets` Table
-
-**Schema:**
-```sql
-CREATE TABLE public.vault_assets (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title TEXT NOT NULL,
-  description TEXT,
-  category TEXT NOT NULL, -- 'blueprint', 'code', 'template'
-  file_url TEXT NOT NULL,
-  file_type TEXT, -- 'pdf', 'zip', 'ts', etc.
-  is_active BOOLEAN DEFAULT true,
-  display_order INTEGER DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-
--- RLS: Only authenticated users with vault access can download
-```
-
-### Route Configuration
-
-**Update:** `src/App.tsx`
-- Add `/vault` route pointing to new Vault page
-- No ProtectedRoute wrapper (handled internally for UX)
+**Fix:**
+- Create a `public/_redirects` file with SPA fallback rule: `/* /index.html 200`
+- This tells the hosting platform to serve `index.html` for all routes and let React Router handle routing client-side
 
 ---
 
-## Task 3: Revenue Telemetry
+## Bug 3: Buttons Not Performing Actions (Animations Work)
 
-### New Edge Function: `whop-revenue`
+**Symptoms:** Many buttons have beautiful animations but no actual functionality when clicked
 
-**File:** `supabase/functions/whop-revenue/index.ts`
+**Root Cause:** Several `TextSwapButton` components are missing `onClick` handlers:
 
-**Capabilities:**
-- Fetch payments from Whop API using `payments.list` endpoint
-- Filter by company_id and date range (last 30 days)
-- Return daily aggregated revenue data
+### HeroSection.tsx (lines 84-97):
+- "View My Builds" button - **No onClick handler**
+- "Hire for Architecture" button - **No onClick handler**
 
-### Admin Dashboard: Revenue Panel
-
-**File:** `src/components/admin/RevenuePanel.tsx`
-
-**Design:**
-- Card with Technical Brutalist styling
-- Header: `> REVENUE_STREAM`
-- Cyan-Blue (#00E5FF) line chart showing daily revenue
-- Quick stats: Total 30-day revenue, Average daily, Peak day
-- Uses recharts `LineChart` component
-
-**Chart Implementation:**
-```text
-+--------------------------------+
-| > REVENUE_STREAM         LIVE  |
-+--------------------------------+
-|  $12,450      $415      $890  |
-|  30D Total    Daily Avg  Peak  |
-+--------------------------------+
-|                                |
-|     [Cyan Line Chart]          |
-|     ___/\___/\_______/\__      |
-|    /                           |
-|   /                            |
-+--------------------------------+
-|  // Last 30 days               |
-+--------------------------------+
-```
-
-### Hook: `useRevenueData`
-
-**File:** `src/hooks/useRevenueData.ts`
-
-**Returns:**
-- `dailyRevenue` - Array of { date, amount } for charting
-- `totalRevenue` - Sum of last 30 days
-- `averageDaily` - Daily average
-- `peakDay` - Highest revenue day
-- `isLoading` - Loading state
-
-### Admin Integration
-
-**Update:** `src/pages/Admin.tsx`
-- Add RevenuePanel to the dashboard layout
-- Position in Row 2 alongside ConversionFunnel or as a new row
-
----
-
-## Technical Implementation Details
-
-### Edge Function: `whop-products/index.ts`
-
+### LogicGatesSection.tsx (lines 218-225):
+- Buttons call `handleOfferClick` but the `offerToPlanMapping` object has **empty strings** for all plan IDs:
 ```typescript
-// Key endpoints:
-// GET:  Fetch plans -> https://api.whop.com/v5/companies/{company_id}/plans
-// POST: Create checkout -> https://api.whop.com/v5/checkout_configurations
-
-// Security:
-// - Rate limiting (10 req/min/IP)
-// - JWT validation for checkout creation
-// - CORS headers
-```
-
-### Edge Function: `whop-revenue/index.ts`
-
-```typescript
-// Key endpoint:
-// GET: Fetch payments -> https://api.whop.com/v5/companies/{company_id}/payments
-
-// Query params:
-// - created_after: 30 days ago (ISO timestamp)
-// - status: 'completed'
-
-// Returns aggregated daily totals
-```
-
-### Vault Access Control
-
-```typescript
-// In Vault.tsx
-const { hasPlan, isLoading } = useWhopUser();
-const VAULT_PLAN_ID = "plan_xxxxxxxxx"; // Configured plan ID
-
-const hasVaultAccess = hasPlan(VAULT_PLAN_ID);
-```
-
-### Telemetry Integration
-
-```typescript
-// In VaultAssetCard.tsx
-const { trackClick } = useTelemetry();
-
-const handleDownload = (assetId: string) => {
-  trackClick(`vault_download_${assetId}`, { category: asset.category });
-  // Trigger download
+const offerToPlanMapping: Record<string, string> = {
+  consulting: "", // EMPTY - no Whop plan ID
+  community: "",  // EMPTY
+  store: "",      // EMPTY
+  learn: "",      // EMPTY
 };
 ```
+- This means `offer.whopPlanId` is always falsy, and without a `link` fallback, nothing happens
+
+### FooterSection.tsx (lines 12-17):
+- Links use fragment identifiers (`#consulting`, `#community`, `#store`) but these section IDs don't exist in the DOM
+
+**Fix:**
+- Add onClick handlers to HeroSection buttons (scroll to sections or navigate)
+- Configure actual Whop Plan IDs in the `offerToPlanMapping` object
+- Either add fallback links to LogicGatesSection offers OR map them to real Whop plans
+- Update FooterSection links to use valid routes or existing section IDs
 
 ---
 
-## Files to Create
+## Bug 4: TextSwapButton ref Warning (Minor)
 
-| File | Purpose |
-|------|---------|
-| `supabase/functions/whop-products/index.ts` | Whop plans & checkout Edge Function |
-| `supabase/functions/whop-revenue/index.ts` | Revenue data Edge Function |
-| `src/pages/Vault.tsx` | Builder's Vault page |
-| `src/components/vault/VaultAssetGrid.tsx` | Asset grid component |
-| `src/components/vault/VaultAssetCard.tsx` | Individual asset card |
-| `src/components/vault/VaultLockedState.tsx` | Locked terminal overlay |
-| `src/components/admin/RevenuePanel.tsx` | Revenue chart panel |
-| `src/hooks/useWhopProducts.ts` | Whop products hook |
-| `src/hooks/useRevenueData.ts` | Revenue data hook |
+**Console Warning:** `Function components cannot be given refs`
+
+**Root Cause:** The `TextSwapButton` component is being passed a ref (likely from a form's submit button handling) but doesn't use `React.forwardRef`.
+
+**Fix:** Wrap `TextSwapButton` with `React.forwardRef` to properly forward refs.
+
+---
+
+## Implementation Plan
+
+### Step 1: Fix SPA Routing (Critical)
+Create `public/_redirects` file:
+```
+/* /index.html 200
+```
+
+### Step 2: Fix TOKEN_ENCRYPTION_KEY (Critical)
+- The current key may have whitespace or wrong length
+- Regenerate: A valid 64-character hex string looks like this pattern
+- Update the secret and redeploy whop-oauth Edge Function
+
+### Step 3: Fix HeroSection Buttons
+Add onClick handlers to the two CTA buttons:
+```typescript
+<TextSwapButton
+  defaultText="View My Builds"
+  hoverText="/exec_portfolio"
+  variant="primary"
+  size="lg"
+  icon={<Code2 size={20} />}
+  onClick={() => {
+    const section = document.getElementById("logic-gates");
+    section?.scrollIntoView({ behavior: "smooth" });
+  }}
+/>
+<TextSwapButton
+  defaultText="Hire for Architecture"
+  hoverText="sudo hire --dre"
+  variant="outline"
+  size="lg"
+  icon={<ArrowRight size={20} />}
+  onClick={() => {
+    // Navigate to consulting booking link or scroll to consulting card
+    window.open("https://cal.com/drebuilds", "_blank");
+  }}
+/>
+```
+
+### Step 4: Fix LogicGatesSection Offer Buttons
+Either:
+- **Option A:** Configure real Whop Plan IDs in `offerToPlanMapping`
+- **Option B:** Add fallback `link` values in the `defaultOffers` array for each offer
+
+Example with fallback links:
+```typescript
+const defaultOffers = [
+  {
+    id: "consulting",
+    // ... other props
+    link: "https://cal.com/drebuilds", // Fallback booking link
+  },
+  {
+    id: "community",
+    link: "https://whop.com/drebuilds/", // Fallback community link
+  },
+  // ... etc
+];
+```
+
+### Step 5: Fix FooterSection Navigation
+Update the `navLinks` to use valid routes or section IDs:
+```typescript
+const navLinks = [
+  { path: "~/home", label: "Home", href: "/" },
+  { path: "~/vault", label: "Vault", href: "/vault" },
+  { path: "~/auth", label: "Login", href: "/auth" },
+];
+```
+
+### Step 6: Fix TextSwapButton forwardRef (Minor)
+Wrap the component with `React.forwardRef`:
+```typescript
+export const TextSwapButton = React.forwardRef<HTMLButtonElement, TextSwapButtonProps>(
+  ({ defaultText, hoverText, onClick, ... }, ref) => {
+    // ... component logic
+    return (
+      <motion.button ref={ref} ...>
+        {/* ... */}
+      </motion.button>
+    );
+  }
+);
+TextSwapButton.displayName = "TextSwapButton";
+```
+
+---
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/App.tsx` | Add `/vault` route |
-| `src/components/sections/LogicGatesSection.tsx` | Integrate Whop products & checkout |
-| `src/pages/Admin.tsx` | Add RevenuePanel |
-| `supabase/config.toml` | Register new Edge Functions |
-
-## Database Migration
-
-- Create `vault_assets` table with RLS policies
-- Admins can manage assets
-- Authenticated users with vault plan can read/download
+| `public/_redirects` | Create new file for SPA routing |
+| `src/components/ui/TextSwapButton.tsx` | Add forwardRef support |
+| `src/components/sections/HeroSection.tsx` | Add onClick handlers to CTA buttons |
+| `src/components/sections/LogicGatesSection.tsx` | Add fallback links to offers |
+| `src/components/sections/FooterSection.tsx` | Update navLinks with valid routes |
+| Secret: `TOKEN_ENCRYPTION_KEY` | May need regeneration if improperly formatted |
 
 ---
 
 ## Configuration Required
 
-### Vault Plan ID
-You will need to provide the Whop Plan ID that grants access to The Builder's Vault. This will be used in the `useWhopUser().hasPlan(planId)` check.
+### Whop Plan IDs Needed
+To fully enable the checkout flow, you'll need to provide the actual Whop Plan IDs for:
+- `consulting` - Business Systems Architecture plan
+- `community` - Agentic Engineering Hub plan  
+- `store` - Plug-and-Play Logic plan
+- `learn` - Content & Education plan
 
-### Sample Vault Assets
-Initial seed data for the vault can be added after the table is created.
+### Fallback Links Needed
+If Whop Plan IDs aren't ready, provide fallback URLs for each offer:
+- Consulting booking link (e.g., Calendly/Cal.com)
+- Community join link
+- Store/shop link
+- Learning content link
 
 ---
 
-## Security Considerations
+## Deployment Steps After Fix
 
-1. **Edge Functions**: All Whop API calls happen server-side (secrets protected)
-2. **Checkout Sessions**: Generated per-request, not stored client-side
-3. **Asset Downloads**: Protected by RLS and plan membership verification
-4. **Revenue Data**: Only accessible by admin users
-
+1. Deploy code changes
+2. Verify `_redirects` file is in the build output
+3. Verify TOKEN_ENCRYPTION_KEY secret is properly formatted
+4. Test each route directly in browser (`/admin`, `/auth`, `/vault`)
+5. Test Whop OAuth flow end-to-end
+6. Test all button clicks for functionality
