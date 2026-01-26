@@ -12,6 +12,7 @@ import { ConversionFunnel } from "@/components/admin/ConversionFunnel";
 import { LiveEventLog } from "@/components/admin/LiveEventLog";
 import { RevenuePanel } from "@/components/admin/RevenuePanel";
 import { useSubscriberStats, useClickStats } from "@/hooks/useAdminStats";
+import { useAdminRealtime } from "@/hooks/useAdminRealtime";
 import { Users, MousePointer, Zap } from "lucide-react";
 
 const springConfig = {
@@ -23,6 +24,7 @@ const springConfig = {
 const AdminDashboard = () => {
   const { data: subscriberStats } = useSubscriberStats();
   const { data: clickStats } = useClickStats();
+  const { realtimeEvents } = useAdminRealtime();
 
   const totalClicks = clickStats?.reduce((sum, stat) => sum + stat.clicks, 0) || 0;
 
@@ -59,7 +61,7 @@ const AdminDashboard = () => {
           <div className="lg:col-span-2">
             <RevenuePanel />
           </div>
-          <LiveEventLog />
+          <LiveEventLog realtimeEvents={realtimeEvents} />
         </div>
 
         {/* Row 3: Conversion Funnel */}
