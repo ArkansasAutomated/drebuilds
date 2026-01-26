@@ -9,9 +9,11 @@ const ALLOWED_ORIGINS = [
 ];
 
 const getCorsHeaders = (origin: string | null) => {
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin || "") 
-    ? origin 
-    : ALLOWED_ORIGINS[0];
+  // Allow Lovable preview origins dynamically
+  const isLovablePreview = origin?.endsWith('.lovableproject.com');
+  const isAllowed = ALLOWED_ORIGINS.includes(origin || "") || isLovablePreview;
+  
+  const allowedOrigin = isAllowed ? origin : ALLOWED_ORIGINS[0];
   
   return {
     "Access-Control-Allow-Origin": allowedOrigin!,
