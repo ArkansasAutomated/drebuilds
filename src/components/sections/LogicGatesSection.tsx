@@ -1,14 +1,25 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { TextSwapButton } from "@/components/ui/TextSwapButton";
 import { CornerAccent } from "@/components/decorative/CornerAccent";
-import { Cpu, Users, Package, Video } from "lucide-react";
+import { Cpu, Users, Package, Video, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useWhopProducts } from "@/hooks/useWhopProducts";
+import { Button } from "@/components/ui/button";
 
 const springConfig = {
   mass: 1,
   stiffness: 120,
   damping: 14,
+};
+
+// Mapping of offer IDs to Whop plan IDs (configure these based on your Whop plans)
+const offerToPlanMapping: Record<string, string> = {
+  consulting: "", // Add Whop plan ID for consulting
+  community: "", // Add Whop plan ID for community
+  store: "", // Add Whop plan ID for store
+  learn: "", // Add Whop plan ID for learn
 };
 
 const defaultOffers = [
@@ -81,6 +92,12 @@ const cardVariants = {
 };
 
 export const LogicGatesSection = () => {
+  const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
+  
+  // Fetch Whop plans
+  const { plans: whopPlans, isLoading: whopLoading, createCheckout, isCheckoutLoading } = useWhopProducts();
+  
+  // Fetch local offer settings
   const { data: dbOffers } = useQuery({
     queryKey: ["offer-settings"],
     queryFn: async () => {
@@ -93,16 +110,40 @@ export const LogicGatesSection = () => {
     },
   });
 
+  // Merge Whop plans with local offers
   const offers = defaultOffers.map((defaultOffer) => {
     const dbOffer = dbOffers?.find((o) => o.id === defaultOffer.id);
+    const whopPlanId = offerToPlanMapping[defaultOffer.id];
+    const whopPlan = whopPlans.find((p) => p.id === whopPlanId);
+    
+    // Prioritize Whop API data, then DB data, then defaults
     return {
       ...defaultOffer,
       title: dbOffer?.title || defaultOffer.title,
-      description: dbOffer?.description || defaultOffer.description,
-      price: dbOffer?.price || defaultOffer.price,
+      description: whopPlan?.description || dbOffer?.description || defaultOffer.description,
+      price: whopPlan ? `$${whopPlan.price}` : (dbOffer?.price || defaultOffer.price),
       icon: iconMap[defaultOffer.id] || Cpu,
+      whopPlanId: whopPlanId || null,
+      link: dbOffer?.link || null,
     };
   });
+
+  const handleOfferClick = async (offer: typeof offers[0]) => {
+    // If there's a Whop plan ID, create checkout session
+    if (offer.whopPlanId) {
+      setLoadingPlanId(offer.id);
+      try {
+        await createCheckout(offer.whopPlanId);
+      } catch (error) {
+        console.error("Checkout error:", error);
+      } finally {
+        setLoadingPlanId(null);
+      }
+    } else if (offer.link) {
+      // Fallback to static link
+      window.open(offer.link, "_blank", "noopener,noreferrer");
+    }
+  };
 
   return (
     <section className="relative py-24 md:py-32">
@@ -168,13 +209,21 @@ export const LogicGatesSection = () => {
 
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-lg text-primary">{offer.price}</span>
-                  <TextSwapButton
-                    defaultText={offer.defaultCTA}
-                    hoverText={offer.hoverCTA}
-                    variant="secondary"
-                    size="sm"
-                    trackingId={offer.id}
-                  />
+                  {loadingPlanId === offer.id || (isCheckoutLoading && loadingPlanId === offer.id) ? (
+                    <Button variant="secondary" size="sm" disabled className="gap-2">
+                      <Loader2 size={14} className="animate-spin" />
+                      Processing...
+                    </Button>
+                  ) : (
+                    <TextSwapButton
+                      defaultText={offer.defaultCTA}
+                      hoverText={offer.hoverCTA}
+                      variant="secondary"
+                      size="sm"
+                      trackingId={offer.id}
+                      onClick={() => handleOfferClick(offer)}
+                    />
+                  )}
                 </div>
 
                 <div className="absolute -bottom-4 -right-4 opacity-5 group-hover:opacity-10 transition-opacity">
