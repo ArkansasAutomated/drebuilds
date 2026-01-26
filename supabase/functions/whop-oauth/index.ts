@@ -29,6 +29,75 @@ const isRateLimited = (ip: string): boolean => {
 // Expected redirect URI for validation
 const EXPECTED_REDIRECT_URI = "https://drebuilds.online/auth/whop/callback";
 
+// Token encryption utilities using AES-256-GCM
+const encryptToken = async (token: string, keyHex: string): Promise<string> => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(token);
+  
+  // Generate random IV (12 bytes for GCM)
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  
+  // Derive key from hex string (must be 32 bytes / 64 hex chars for AES-256)
+  const keyBytes = new Uint8Array(keyHex.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []);
+  
+  const key = await crypto.subtle.importKey(
+    "raw",
+    keyBytes,
+    { name: "AES-GCM" },
+    false,
+    ["encrypt"]
+  );
+  
+  const encrypted = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    data
+  );
+  
+  // Combine IV + encrypted data and encode as base64
+  const combined = new Uint8Array(iv.length + encrypted.byteLength);
+  combined.set(iv);
+  combined.set(new Uint8Array(encrypted), iv.length);
+  
+  return btoa(String.fromCharCode(...combined));
+};
+
+const decryptToken = async (encryptedToken: string, keyHex: string): Promise<string> => {
+  try {
+    // Decode base64
+    const combined = new Uint8Array(
+      atob(encryptedToken).split("").map(c => c.charCodeAt(0))
+    );
+    
+    // Extract IV (first 12 bytes) and encrypted data
+    const iv = combined.slice(0, 12);
+    const encrypted = combined.slice(12);
+    
+    // Derive key from hex string
+    const keyBytes = new Uint8Array(keyHex.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []);
+    
+    const key = await crypto.subtle.importKey(
+      "raw",
+      keyBytes,
+      { name: "AES-GCM" },
+      false,
+      ["decrypt"]
+    );
+    
+    const decrypted = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv },
+      key,
+      encrypted
+    );
+    
+    return new TextDecoder().decode(decrypted);
+  } catch {
+    // Return original if decryption fails (for backward compatibility with unencrypted tokens)
+    console.warn("Token decryption failed, may be unencrypted legacy token");
+    return encryptedToken;
+  }
+};
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -79,11 +148,20 @@ Deno.serve(async (req) => {
     const targetCompanyId = Deno.env.get("WHOP_COMPANY_ID");
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const encryptionKey = Deno.env.get("TOKEN_ENCRYPTION_KEY");
 
     if (!clientId || !clientSecret) {
       console.error("Missing WHOP_CLIENT_ID or WHOP_API_KEY");
       return new Response(
         JSON.stringify({ success: false, error: "OAuth credentials not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!encryptionKey || encryptionKey.length !== 64) {
+      console.error("TOKEN_ENCRYPTION_KEY must be a 64-character hex string (32 bytes)");
+      return new Response(
+        JSON.stringify({ success: false, error: "Token encryption not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -190,11 +268,17 @@ Deno.serve(async (req) => {
       userId = existingWhopUser.user_id;
       console.log("Existing Whop user found, updating tokens for user:", userId);
 
+      // Encrypt tokens before storing
+      const encryptedAccessToken = await encryptToken(tokenData.access_token, encryptionKey);
+      const encryptedRefreshToken = tokenData.refresh_token 
+        ? await encryptToken(tokenData.refresh_token, encryptionKey) 
+        : null;
+
       await supabase
         .from("whop_users")
         .update({
-          access_token: tokenData.access_token,
-          refresh_token: tokenData.refresh_token || null,
+          access_token: encryptedAccessToken,
+          refresh_token: encryptedRefreshToken,
           company_ids: companyIds,
           plan_ids: planIds,
           username: userInfo.username || null,
@@ -204,6 +288,7 @@ Deno.serve(async (req) => {
             plan_ids: planIds,
             memberships: userInfo.memberships || [],
             last_synced: new Date().toISOString(),
+            tokens_encrypted: true,
           },
         })
         .eq("whop_user_id", userInfo.id);
@@ -245,14 +330,20 @@ Deno.serve(async (req) => {
         console.log("Created new Supabase user:", userId);
       }
 
+      // Encrypt tokens before storing
+      const encryptedAccessToken = await encryptToken(tokenData.access_token, encryptionKey);
+      const encryptedRefreshToken = tokenData.refresh_token 
+        ? await encryptToken(tokenData.refresh_token, encryptionKey) 
+        : null;
+
       // Create whop_users record
       const { error: insertError } = await supabase
         .from("whop_users")
         .insert({
           user_id: userId,
           whop_user_id: userInfo.id,
-          access_token: tokenData.access_token,
-          refresh_token: tokenData.refresh_token || null,
+          access_token: encryptedAccessToken,
+          refresh_token: encryptedRefreshToken,
           company_ids: companyIds,
           plan_ids: planIds,
           username: userInfo.username || null,
@@ -262,6 +353,7 @@ Deno.serve(async (req) => {
             plan_ids: planIds,
             memberships: userInfo.memberships || [],
             last_synced: new Date().toISOString(),
+            tokens_encrypted: true,
           },
         });
 
