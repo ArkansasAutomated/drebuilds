@@ -178,6 +178,7 @@ const Auth = () => {
 
             {/* Submit Button */}
             <TextSwapButton
+              type="submit"
               defaultText={isSubmitting ? "Processing..." : (isLogin ? "Login" : "Register")}
               hoverText={isSubmitting ? "> processing..." : (isLogin ? "auth.login()" : "auth.register()")}
               variant="primary"

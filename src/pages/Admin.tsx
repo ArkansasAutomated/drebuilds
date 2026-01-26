@@ -3,6 +3,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { CommandCenterLayout } from "@/components/admin/CommandCenterLayout";
 import { SubscriberPanel } from "@/components/admin/SubscriberPanel";
 import { ClickTrackingPanel } from "@/components/admin/ClickTrackingPanel";
+import { SubscribersLog } from "@/components/admin/SubscribersLog";
 import { ContentEditor } from "@/components/admin/ContentEditor";
 import { OfferEditor } from "@/components/admin/OfferEditor";
 import { TelemetryPanel } from "@/components/admin/TelemetryPanel";
@@ -69,7 +70,10 @@ const AdminDashboard = () => {
         {/* Row 4: Click Tracking */}
         <ClickTrackingPanel />
 
-        {/* Row 4: Content Management */}
+        {/* Row 5: Subscribers Log */}
+        <SubscribersLog />
+
+        {/* Row 6: Content Management */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <ContentEditor />
           <OfferEditor />
