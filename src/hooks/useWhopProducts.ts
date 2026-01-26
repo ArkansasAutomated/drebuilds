@@ -47,7 +47,7 @@ export const useWhopProducts = () => {
         method: "POST",
         body: {
           plan_id: planId,
-          redirect_url: redirectUrl || window.location.origin + "/vault",
+          redirect_url: redirectUrl || window.location.origin + "/#/vault",
         },
       });
 
