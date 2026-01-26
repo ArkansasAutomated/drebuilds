@@ -169,7 +169,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             company_id: WHOP_COMPANY_ID,
             plan_id: plan_id,
-            redirect_url: redirect_url || "https://drebuilds.online/vault",
+            redirect_url: redirect_url || "https://drebuilds.online/#/vault",
             metadata: userId ? { supabase_user_id: userId } : undefined,
           }),
         }

@@ -27,7 +27,7 @@ const isRateLimited = (ip: string): boolean => {
 };
 
 // Expected redirect URI for validation
-const EXPECTED_REDIRECT_URI = "https://drebuilds.online/auth/whop/callback";
+const EXPECTED_REDIRECT_URI = "https://drebuilds.online/#/auth/whop/callback";
 
 // Token encryption utilities using AES-256-GCM
 const encryptToken = async (token: string, keyHex: string): Promise<string> => {

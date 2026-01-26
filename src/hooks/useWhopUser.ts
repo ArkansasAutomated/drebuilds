@@ -31,7 +31,7 @@ interface WhopUserState {
 // Public OAuth config values
 const WHOP_CLIENT_ID = "app_ndC8gk4czaoeFG";
 const WHOP_COMPANY_ID = "biz_LBZIL5SNocl6WR";
-const REDIRECT_URI = "https://drebuilds.online/auth/whop/callback";
+const REDIRECT_URI = "https://drebuilds.online/#/auth/whop/callback";
 
 export const useWhopUser = () => {
   const { user } = useAuth();

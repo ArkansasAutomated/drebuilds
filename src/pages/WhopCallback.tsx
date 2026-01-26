@@ -7,7 +7,7 @@ import { BlinkingCursor } from "@/components/ui/BlinkingCursor";
 import { CornerAccent } from "@/components/decorative/CornerAccent";
 import { Terminal, CheckCircle, XCircle } from "lucide-react";
 
-const REDIRECT_URI = "https://drebuilds.online/auth/whop/callback";
+const REDIRECT_URI = "https://drebuilds.online/#/auth/whop/callback";
 
 const WhopCallback = () => {
   const [searchParams] = useSearchParams();
