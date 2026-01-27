@@ -18,9 +18,15 @@ const WhopCallback = () => {
 
   useEffect(() => {
     const handleCallback = async () => {
-      const code = searchParams.get("code");
-      const error = searchParams.get("error");
-      const errorDescription = searchParams.get("error_description");
+      // Whop puts the code in window.location.search (before the hash)
+      // e.g., /?code=ABC123#/auth/whop/callback
+      // React Router's useSearchParams only reads params after the hash
+      const windowParams = new URLSearchParams(window.location.search);
+      
+      // Try window.location.search first, fall back to hash-based params
+      const code = windowParams.get("code") || searchParams.get("code");
+      const error = windowParams.get("error") || searchParams.get("error");
+      const errorDescription = windowParams.get("error_description") || searchParams.get("error_description");
 
       if (error) {
         console.error("OAuth error from Whop:", error, errorDescription);
