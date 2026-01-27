@@ -139,14 +139,44 @@ export const useWhopUser = () => {
   }, [fetchWhopUser]);
 
   // OAuth initiation function
-  const initiateWhopOAuth = useCallback(() => {
+  const initiateWhopOAuth = useCallback(async () => {
     if (!WHOP_CLIENT_ID) {
       console.error("WHOP_CLIENT_ID not configured");
       return;
     }
 
-    const authUrl = `https://whop.com/oauth?client_id=${WHOP_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
-    window.location.href = authUrl;
+    // Generate PKCE values
+    const generateRandomString = (length: number) => {
+      const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+      let text = "";
+      for (let i = 0; i < length; i++) {
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+      }
+      return text;
+    };
+
+    const generateCodeChallenge = async (codeVerifier: string) => {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(codeVerifier);
+      const digest = await window.crypto.subtle.digest("SHA-256", data);
+      return btoa(String.fromCharCode(...new Uint8Array(digest)))
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "");
+    };
+
+    try {
+      const codeVerifier = generateRandomString(128);
+      const codeChallenge = await generateCodeChallenge(codeVerifier);
+
+      // Store verifier for callback handling
+      window.sessionStorage.setItem("whop_code_verifier", codeVerifier);
+
+      const authUrl = `https://whop.com/oauth?client_id=${WHOP_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
+      window.location.href = authUrl;
+    } catch (err) {
+      console.error("Failed to initiate OAuth:", err);
+    }
   }, []);
 
   // Refresh Whop user data

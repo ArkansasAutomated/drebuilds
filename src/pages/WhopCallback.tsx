@@ -22,7 +22,7 @@ const WhopCallback = () => {
       // e.g., /?code=ABC123#/auth/whop/callback
       // React Router's useSearchParams only reads params after the hash
       const windowParams = new URLSearchParams(window.location.search);
-      
+
       // Try window.location.search first, fall back to hash-based params
       const code = windowParams.get("code") || searchParams.get("code");
       const error = windowParams.get("error") || searchParams.get("error");
@@ -46,13 +46,19 @@ const WhopCallback = () => {
       setMessage("exchanging_tokens");
 
       try {
+        const codeVerifier = window.sessionStorage.getItem("whop_code_verifier");
+
         // Call Edge Function to handle OAuth token exchange
         const { data, error: fnError } = await supabase.functions.invoke("whop-oauth", {
           body: {
             code,
             redirect_uri: REDIRECT_URI,
+            code_verifier: codeVerifier, // Pass PKCE verifier
           },
         });
+
+        // Clean up verifier
+        window.sessionStorage.removeItem("whop_code_verifier");
 
         if (fnError) {
           console.error("Edge function error:", fnError);
@@ -126,13 +132,12 @@ const WhopCallback = () => {
 
           {/* Header */}
           <div className="flex items-center gap-3 mb-8">
-            <div className={`w-10 h-10 flex items-center justify-center rounded-sm border ${
-              status === "processing" 
-                ? "bg-surface-elevated border-primary/30" 
+            <div className={`w-10 h-10 flex items-center justify-center rounded-sm border ${status === "processing"
+                ? "bg-surface-elevated border-primary/30"
                 : status === "success"
-                ? "bg-success/10 border-success/30"
-                : "bg-destructive/10 border-destructive/30"
-            }`}>
+                  ? "bg-success/10 border-success/30"
+                  : "bg-destructive/10 border-destructive/30"
+              }`}>
               {status === "processing" && <Terminal className="w-5 h-5 text-primary" />}
               {status === "success" && <CheckCircle className="w-5 h-5 text-success" />}
               {status === "error" && <XCircle className="w-5 h-5 text-destructive" />}
@@ -148,18 +153,18 @@ const WhopCallback = () => {
           </div>
 
           {/* Status Display */}
-            <div className="space-y-4">
-              <div className="font-mono text-sm text-foreground">
-                {status === "processing" ? (
-                  <TerminalTypingText 
-                    text={`> ${message}`} 
-                    speed={20}
-                    showCursor={true}
-                  />
-                ) : (
-                  <span>&gt; {message}</span>
-                )}
-              </div>
+          <div className="space-y-4">
+            <div className="font-mono text-sm text-foreground">
+              {status === "processing" ? (
+                <TerminalTypingText
+                  text={`> ${message}`}
+                  speed={20}
+                  showCursor={true}
+                />
+              ) : (
+                <span>&gt; {message}</span>
+              )}
+            </div>
 
             {status === "success" && (
               <motion.div
