@@ -9,10 +9,10 @@ const ALLOWED_ORIGINS = [
 ];
 
 const getCorsHeaders = (origin: string | null) => {
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin || "") 
-    ? origin 
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin || "")
+    ? origin
     : ALLOWED_ORIGINS[0];
-  
+
   return {
     "Access-Control-Allow-Origin": allowedOrigin!,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -28,12 +28,12 @@ const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
 const isRateLimited = (ip: string): boolean => {
   const now = Date.now();
   const record = rateLimitMap.get(ip);
-  
+
   if (!record || now > record.resetAt) {
     rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
     return false;
   }
-  
+
   record.count++;
   if (record.count > RATE_LIMIT_MAX) {
     return true;
@@ -48,13 +48,13 @@ const EXPECTED_REDIRECT_URI = "https://drebuilds.online/#/auth/whop/callback";
 const encryptToken = async (token: string, keyHex: string): Promise<string> => {
   const encoder = new TextEncoder();
   const data = encoder.encode(token);
-  
+
   // Generate random IV (12 bytes for GCM)
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  
+
   // Derive key from hex string (must be 32 bytes / 64 hex chars for AES-256)
   const keyBytes = new Uint8Array(keyHex.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []);
-  
+
   const key = await crypto.subtle.importKey(
     "raw",
     keyBytes,
@@ -62,18 +62,18 @@ const encryptToken = async (token: string, keyHex: string): Promise<string> => {
     false,
     ["encrypt"]
   );
-  
+
   const encrypted = await crypto.subtle.encrypt(
     { name: "AES-GCM", iv },
     key,
     data
   );
-  
+
   // Combine IV + encrypted data and encode as base64
   const combined = new Uint8Array(iv.length + encrypted.byteLength);
   combined.set(iv);
   combined.set(new Uint8Array(encrypted), iv.length);
-  
+
   return btoa(String.fromCharCode(...combined));
 };
 
@@ -82,14 +82,14 @@ const decryptToken = async (encryptedToken: string, keyHex: string): Promise<str
   const combined = new Uint8Array(
     atob(encryptedToken).split("").map(c => c.charCodeAt(0))
   );
-  
+
   // Extract IV (first 12 bytes) and encrypted data
   const iv = combined.slice(0, 12);
   const encrypted = combined.slice(12);
-  
+
   // Derive key from hex string
   const keyBytes = new Uint8Array(keyHex.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []);
-  
+
   const key = await crypto.subtle.importKey(
     "raw",
     keyBytes,
@@ -97,13 +97,13 @@ const decryptToken = async (encryptedToken: string, keyHex: string): Promise<str
     false,
     ["decrypt"]
   );
-  
+
   const decrypted = await crypto.subtle.decrypt(
     { name: "AES-GCM", iv },
     key,
     encrypted
   );
-  
+
   return new TextDecoder().decode(decrypted);
   // NOTE: No fallback - if decryption fails, users must re-authenticate
 };
@@ -111,7 +111,7 @@ const decryptToken = async (encryptedToken: string, keyHex: string): Promise<str
 Deno.serve(async (req) => {
   const origin = req.headers.get("Origin");
   const corsHeaders = getCorsHeaders(origin);
-  
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
 
   // Rate limiting check
   const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  
+
   if (isRateLimited(clientIp)) {
     console.warn(`Rate limit exceeded for IP: ${clientIp}`);
     return new Response(
@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { code, redirect_uri } = await req.json();
+    const { code, redirect_uri, code_verifier } = await req.json();
 
     // Security logging
     console.log({
@@ -138,6 +138,7 @@ Deno.serve(async (req) => {
       action: "whop_oauth_attempt",
       has_code: !!code,
       redirect_uri: redirect_uri,
+      has_verifier: !!code_verifier,
     });
 
     if (!code) {
@@ -182,16 +183,22 @@ Deno.serve(async (req) => {
     console.log("Exchanging authorization code for access token...");
 
     // 1. Exchange code for access token
+    const tokenParams = new URLSearchParams({
+      grant_type: "authorization_code",
+      code,
+      client_id: clientId,
+      client_secret: clientSecret,
+      redirect_uri,
+    });
+
+    if (code_verifier) {
+      tokenParams.append("code_verifier", code_verifier);
+    }
+
     const tokenResponse = await fetch("https://api.whop.com/oauth/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        grant_type: "authorization_code",
-        code,
-        client_id: clientId,
-        client_secret: clientSecret,
-        redirect_uri,
-      }),
+      body: tokenParams,
     });
 
     const tokenData = await tokenResponse.json();
@@ -200,9 +207,9 @@ Deno.serve(async (req) => {
     if (!tokenData.access_token) {
       console.error("Token exchange failed:", tokenData);
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: tokenData.error_description || tokenData.error || "Failed to obtain access token" 
+        JSON.stringify({
+          success: false,
+          error: tokenData.error_description || tokenData.error || "Failed to obtain access token"
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -231,7 +238,7 @@ Deno.serve(async (req) => {
     // 3. Extract company IDs and plan IDs from memberships
     const companyIds: string[] = [];
     const planIds: string[] = [];
-    
+
     if (userInfo.memberships && Array.isArray(userInfo.memberships)) {
       for (const membership of userInfo.memberships) {
         if (membership.company_id && !companyIds.includes(membership.company_id)) {
@@ -283,8 +290,8 @@ Deno.serve(async (req) => {
 
       // Encrypt tokens before storing
       const encryptedAccessToken = await encryptToken(tokenData.access_token, encryptionKey);
-      const encryptedRefreshToken = tokenData.refresh_token 
-        ? await encryptToken(tokenData.refresh_token, encryptionKey) 
+      const encryptedRefreshToken = tokenData.refresh_token
+        ? await encryptToken(tokenData.refresh_token, encryptionKey)
         : null;
 
       await supabase
@@ -345,8 +352,8 @@ Deno.serve(async (req) => {
 
       // Encrypt tokens before storing
       const encryptedAccessToken = await encryptToken(tokenData.access_token, encryptionKey);
-      const encryptedRefreshToken = tokenData.refresh_token 
-        ? await encryptToken(tokenData.refresh_token, encryptionKey) 
+      const encryptedRefreshToken = tokenData.refresh_token
+        ? await encryptToken(tokenData.refresh_token, encryptionKey)
         : null;
 
       // Create whop_users record

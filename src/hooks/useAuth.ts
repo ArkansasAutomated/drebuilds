@@ -76,8 +76,10 @@ export const useAuth = () => {
   };
 
   const signUp = async (email: string, password: string) => {
-    const redirectUrl = `${window.location.origin}/#/`;
-    
+    // Use configured site URL to prevent open redirect attacks
+    const siteUrl = import.meta.env.VITE_SITE_URL || window.location.origin;
+    const redirectUrl = `${siteUrl}/#/`;
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
