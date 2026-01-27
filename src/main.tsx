@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
+import { ErrorBoundary } from "./components/ErrorBoundary.tsx";
 import "./index.css";
 
 // Auto-redirect clean URLs to hash-based URLs for HashRouter compatibility
@@ -11,5 +12,10 @@ if (pathname !== "/" && !hash) {
   window.location.replace(window.location.origin + "/#" + pathname + search);
 } else {
   // Render the app normally
-  createRoot(document.getElementById("root")!).render(<App />);
+  createRoot(document.getElementById("root")!).render(
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  );
 }
+

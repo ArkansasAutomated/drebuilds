@@ -14,84 +14,52 @@ interface ClickStats {
   percentage: number;
 }
 
+/**
+ * Fetch subscriber stats using Supabase RPC for better performance.
+ * Computation is offloaded to the database instead of client-side.
+ */
 export const useSubscriberStats = () => {
   return useQuery({
     queryKey: ["admin", "subscriber-stats"],
     queryFn: async (): Promise<SubscriberStats> => {
-      const now = new Date();
-      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const startOfWeek = new Date(startOfDay);
-      startOfWeek.setDate(startOfWeek.getDate() - 7);
-      const startOfLastWeek = new Date(startOfWeek);
-      startOfLastWeek.setDate(startOfLastWeek.getDate() - 7);
+      const { data, error } = await supabase.rpc("get_subscriber_stats");
 
-      // Get total count
-      const { count: total } = await supabase
-        .from("subscribers")
-        .select("*", { count: "exact", head: true });
+      if (error) {
+        console.error("Failed to fetch subscriber stats:", error);
+        throw error;
+      }
 
-      // Get today's count
-      const { count: today } = await supabase
-        .from("subscribers")
-        .select("*", { count: "exact", head: true })
-        .gte("subscribed_at", startOfDay.toISOString());
-
-      // Get this week's count
-      const { count: thisWeek } = await supabase
-        .from("subscribers")
-        .select("*", { count: "exact", head: true })
-        .gte("subscribed_at", startOfWeek.toISOString());
-
-      // Get last week's count for growth calculation
-      const { count: lastWeek } = await supabase
-        .from("subscribers")
-        .select("*", { count: "exact", head: true })
-        .gte("subscribed_at", startOfLastWeek.toISOString())
-        .lt("subscribed_at", startOfWeek.toISOString());
-
-      const growthPercent = lastWeek && lastWeek > 0 
-        ? ((thisWeek || 0) - lastWeek) / lastWeek * 100 
-        : 0;
-
-      return {
-        total: total || 0,
-        today: today || 0,
-        thisWeek: thisWeek || 0,
-        growthPercent: Math.round(growthPercent * 10) / 10,
-      };
+      return data as SubscriberStats;
     },
+    staleTime: 60 * 1000, // Cache for 1 minute
+    retry: 2,
   });
 };
 
+/**
+ * Fetch click stats using Supabase RPC for better performance.
+ */
 export const useClickStats = () => {
   return useQuery({
     queryKey: ["admin", "click-stats"],
     queryFn: async (): Promise<ClickStats[]> => {
-      const { data, error } = await supabase
-        .from("button_clicks")
-        .select("button_id");
+      const { data, error } = await supabase.rpc("get_click_stats");
 
-      if (error) throw error;
+      if (error) {
+        console.error("Failed to fetch click stats:", error);
+        throw error;
+      }
 
-      // Count clicks per button
-      const clickCounts: Record<string, number> = {};
-      let totalClicks = 0;
-
-      (data || []).forEach((click) => {
-        clickCounts[click.button_id] = (clickCounts[click.button_id] || 0) + 1;
-        totalClicks++;
-      });
-
-      // Convert to array with percentages
+      // Ensure all expected buttons are represented
       const buttons = ["consulting", "community", "store", "learn"];
-      return buttons.map((buttonId) => ({
-        buttonId,
-        clicks: clickCounts[buttonId] || 0,
-        percentage: totalClicks > 0 
-          ? Math.round((clickCounts[buttonId] || 0) / totalClicks * 1000) / 10 
-          : 0,
-      }));
+      const statsMap = new Map((data as ClickStats[] || []).map(s => [s.buttonId, s]));
+
+      return buttons.map(buttonId =>
+        statsMap.get(buttonId) || { buttonId, clicks: 0, percentage: 0 }
+      );
     },
+    staleTime: 60 * 1000, // Cache for 1 minute
+    retry: 2,
   });
 };
 
@@ -107,6 +75,7 @@ export const useContentItems = () => {
       if (error) throw error;
       return data;
     },
+    staleTime: 60 * 1000, // Cache for 1 minute
   });
 };
 
@@ -121,5 +90,6 @@ export const useOfferSettings = () => {
       if (error) throw error;
       return data;
     },
+    staleTime: 60 * 1000, // Cache for 1 minute
   });
 };

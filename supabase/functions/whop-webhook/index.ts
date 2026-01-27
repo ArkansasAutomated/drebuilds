@@ -4,6 +4,55 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const webhookSecret = Deno.env.get("WHOP_WEBHOOK_KEY")!;
 
+/**
+ * Verify HMAC signature from webhook payload
+ * @param payload - Raw request body as string
+ * @param signature - Signature from x-whop-signature header
+ * @param secret - Webhook secret key
+ * @returns Promise<boolean> - True if signature is valid
+ */
+async function verifyHmacSignature(
+  payload: string,
+  signature: string | null,
+  secret: string
+): Promise<boolean> {
+  if (!signature) return false;
+
+  try {
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      "raw",
+      encoder.encode(secret),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+
+    const signatureBytes = await crypto.subtle.sign(
+      "HMAC",
+      key,
+      encoder.encode(payload)
+    );
+
+    const expectedSignature = Array.from(new Uint8Array(signatureBytes))
+      .map(b => b.toString(16).padStart(2, "0"))
+      .join("");
+
+    // Constant-time comparison to prevent timing attacks
+    if (signature.length !== expectedSignature.length) return false;
+
+    let result = 0;
+    for (let i = 0; i < signature.length; i++) {
+      result |= signature.charCodeAt(i) ^ expectedSignature.charCodeAt(i);
+    }
+
+    return result === 0;
+  } catch (err) {
+    console.error("HMAC verification error:", err);
+    return false;
+  }
+}
+
 interface WebhookPayload {
   action: string;
   data: {
@@ -42,10 +91,18 @@ Deno.serve(async (req) => {
     );
   }
 
-  // Validate shared secret from n8n
-  const incomingSecret = req.headers.get("x-webhook-secret");
-  if (!incomingSecret || incomingSecret !== webhookSecret) {
-    console.warn("Invalid or missing webhook secret");
+  // Get raw body for HMAC verification
+  const rawBody = await req.text();
+
+  // Validate webhook signature (HMAC) or fall back to shared secret
+  const hmacSignature = req.headers.get("x-whop-signature");
+  const sharedSecret = req.headers.get("x-webhook-secret");
+
+  const isHmacValid = await verifyHmacSignature(rawBody, hmacSignature, webhookSecret);
+  const isSharedSecretValid = sharedSecret === webhookSecret;
+
+  if (!isHmacValid && !isSharedSecretValid) {
+    console.warn("Invalid or missing webhook authentication");
     return new Response(
       JSON.stringify({ error: "Unauthorized" }),
       { status: 401, headers: { "Content-Type": "application/json" } }
@@ -55,10 +112,10 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
-    const payload: WebhookPayload = await req.json();
+    const payload: WebhookPayload = JSON.parse(rawBody);
     const eventType = payload.action;
     const eventId = payload.data?.id || crypto.randomUUID();
-    
+
     console.log(`Received webhook event: ${eventType}, event_id: ${eventId}`);
     console.log(`Payload: ${JSON.stringify(payload)}`);
 
@@ -218,7 +275,7 @@ async function broadcastToAdminChannel(
 ) {
   try {
     const channel = supabase.channel("admin_updates");
-    
+
     await channel.send({
       type: "broadcast",
       event: "webhook_event",
@@ -270,7 +327,7 @@ async function handleMembershipActivation(
   }
 
   const currentPlanIds = whopUser.plan_ids || [];
-  
+
   // Only add if not already present
   if (!currentPlanIds.includes(planId)) {
     const { error: updateError } = await supabase
@@ -283,7 +340,7 @@ async function handleMembershipActivation(
     }
 
     console.log(`Added plan ${planId} to user ${whopUserId}`);
-    
+
     // Broadcast membership activation
     await broadcastToAdminChannel(supabase, "membership.activated", {
       plan_id: planId,
@@ -340,7 +397,7 @@ async function handleMembershipDeactivation(
     }
 
     console.log(`Removed plan ${planId} from user ${whopUserId}`);
-    
+
     // Broadcast membership deactivation
     await broadcastToAdminChannel(supabase, "membership.deactivated", {
       plan_id: planId,
