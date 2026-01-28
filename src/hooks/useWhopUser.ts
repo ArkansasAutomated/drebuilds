@@ -20,6 +20,7 @@ interface WhopUserSafe {
       [key: string]: unknown;
     }>;
     last_synced?: string;
+    expires_at?: string;
   } | null;
   created_at: string | null;
   updated_at: string | null;
@@ -40,6 +41,7 @@ interface WhopUser {
       [key: string]: unknown;
     }>;
     last_synced?: string;
+    expires_at?: string;
   } | null;
 }
 
@@ -145,6 +147,52 @@ export const useWhopUser = () => {
     fetchWhopUser();
   }, [fetchWhopUser]);
 
+  // Token Auto-Refresh Logic
+  const refreshWhopToken = useCallback(async () => {
+    try {
+      console.log("Refreshing Whop token...");
+      const { data, error } = await supabase.functions.invoke("whop-oauth", {
+        body: { grant_type: "refresh_token" }
+      });
+
+      if (error || !data?.success) {
+        console.error("Failed to auto-refresh token:", error || data?.error);
+        return false;
+      }
+
+      console.log("Token refreshed successfully. New expiry:", data.expires_at);
+      fetchWhopUser(); // Reload user data to get new metadata
+      return true;
+    } catch (err) {
+      console.error("Error invoking refresh function:", err);
+      return false;
+    }
+  }, [fetchWhopUser]);
+
+  useEffect(() => {
+    if (!state.whopUser?.metadata?.expires_at) return;
+
+    const expiresAt = new Date(state.whopUser.metadata.expires_at).getTime();
+    const now = Date.now();
+    const timeUntilExpiry = expiresAt - now;
+
+    // Refresh 5 minutes before expiry
+    const REFRESH_BUFFER = 5 * 60 * 1000;
+
+    if (timeUntilExpiry < REFRESH_BUFFER) {
+      // Token is already expired or close to it
+      refreshWhopToken();
+    } else {
+      // Schedule refresh
+      const timeoutId = setTimeout(() => {
+        refreshWhopToken();
+      }, timeUntilExpiry - REFRESH_BUFFER);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [state.whopUser, refreshWhopToken]);
+
+
   // OAuth initiation function
   const initiateWhopOAuth = useCallback(async () => {
     if (!WHOP_CLIENT_ID) {
@@ -187,7 +235,7 @@ export const useWhopUser = () => {
     }
   }, []);
 
-  // Refresh Whop user data
+  // Refresh Whop user data (manual)
   const refreshWhopUser = useCallback(() => {
     setState(prev => ({ ...prev, isLoading: true }));
     fetchWhopUser();
@@ -197,5 +245,6 @@ export const useWhopUser = () => {
     ...state,
     initiateWhopOAuth,
     refreshWhopUser,
+    refreshWhopToken, // Exported for manual testing
   };
 };
