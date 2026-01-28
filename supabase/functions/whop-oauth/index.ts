@@ -308,12 +308,12 @@ Deno.serve(async (req) => {
 
     console.log("Exchanging authorization code for access token...");
 
-    // 1. Exchange code for access token
+    // 1. Exchange code for access token using Basic Auth (standard OAuth2)
+    const basicAuth = btoa(`${clientId}:${clientSecret}`);
+
     const tokenParams = new URLSearchParams({
       grant_type: "authorization_code",
       code,
-      client_id: clientId,
-      client_secret: clientSecret,
       redirect_uri,
     });
 
@@ -323,7 +323,10 @@ Deno.serve(async (req) => {
 
     const tokenResponse = await fetch("https://api.whop.com/oauth/token", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": `Basic ${basicAuth}`
+      },
       body: tokenParams,
     });
 
