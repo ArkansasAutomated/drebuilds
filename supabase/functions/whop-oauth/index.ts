@@ -6,6 +6,8 @@ const ALLOWED_ORIGINS = [
   "https://drebuilds.lovable.app",
   "http://localhost:5173",
   "http://localhost:8080",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:8080",
 ];
 
 const getCorsHeaders = (origin: string | null) => {
@@ -45,7 +47,9 @@ const isRateLimited = (ip: string): boolean => {
 const ALLOWED_REDIRECT_URIS = [
   "https://drebuilds.online/#/auth/whop/callback",
   "http://localhost:8080/#/auth/whop/callback",
-  "http://localhost:5173/#/auth/whop/callback"
+  "http://localhost:5173/#/auth/whop/callback",
+  "http://127.0.0.1:8080/#/auth/whop/callback",
+  "http://127.0.0.1:5173/#/auth/whop/callback"
 ];
 
 // Token encryption utilities using AES-256-GCM

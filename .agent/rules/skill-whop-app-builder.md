@@ -42,3 +42,23 @@ await client.appBuilds.create({
 Next Steps: Test app install on test company.
 Require approval.
 text
+
+Community Moderation App Example (Fast $5K+ MRR Path)
+Build a Whop app for auto-moderation in Dre Builds Community.
+Process:
+
+Create app in dashboard → get appID/key.
+Use memberships API to scan/list members.
+Add ban/kick endpoint (if permissions allow) or flag system.
+Sell as installable app to other communities.
+
+Sample Code
+JavaScriptconst client = new Whop({ apiKey: process.env.WHOP_API_KEY, appID: 'app_xxx' });
+
+// List members for moderation dashboard
+const members = await client.memberships.list({ experience_id: 'exp_xxx' });
+
+// Ban example (if endpoint exists – check latest docs)
+await client.memberships.update({ membership_id: 'mem_xxx', status: 'canceled' });
+Monetization: Charge $99/mo per community – target 50 installs = $5K MRR quick.
+text

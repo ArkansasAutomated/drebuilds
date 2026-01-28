@@ -98,3 +98,23 @@ CREATE POLICY "Admin only access" ON content_items FOR ALL USING (auth.role() = 
 - Skills: 7 modular .md for auth, payments, delivery, community, apps, webhooks, orchestration.
 - Usage: Direct invoke in Claude Code (e.g., "Use whop-auth-setup for OAuth"). No deps on main skills.
 - MCP: Connects via Whop's Claude SSE endpoint for automated actions.
+
+## Whop v1.1 Enhancements
+- Security rules, analytics (churn/ROI), n8n webhook automation, update monitoring.
+- Real @whop/sdk code patterns – ready for live deploy.
+- Prioritize: Test analytics skill → expect instant visibility on subscription health (<10% churn target).
+
+# Whop Security Guardrails Rule
+# v1.0 - Best practice from 2026 dev patterns + Whop rate limits
+
+Always:
+- Never hardcode keys – use env vars (process.env.WHOP_API_KEY).
+- Rotate company/app keys monthly via dashboard.
+- Rate limiting: Whop enforces ~1000 req/hour – add client-side throttle (e.g., p-limit).
+- OAuth: Always use PKCE, store tokens HttpOnly/Secure.
+- Webhooks: Verify signature header (Whop provides secret).
+- Scope minimally: Only request needed permissions.
+- Human approval: Before live key use or webhook endpoint deploy.
+- Ban: No public exposure of tokens or user data.
+
+Enforce in all whop/ skills.

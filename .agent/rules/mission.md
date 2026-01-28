@@ -47,3 +47,8 @@ Build Dre Builds, an AI education content platform for creators like Dre, with a
 - Skills: 7 modular .md for auth, payments, delivery, community, apps, webhooks, orchestration.
 - Usage: Direct invoke in Claude Code (e.g., "Use whop-auth-setup for OAuth"). No deps on main skills.
 - MCP: Connects via Whop's Claude SSE endpoint for automated actions.
+
+## Whop v1.1 Enhancements
+- Security rules, analytics (churn/ROI), n8n webhook automation, update monitoring.
+- Real @whop/sdk code patterns – ready for live deploy.
+- Prioritize: Test analytics skill → expect instant visibility on subscription health (<10% churn target).

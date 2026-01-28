@@ -228,8 +228,22 @@ export const useWhopUser = () => {
       window.sessionStorage.setItem("whop_code_verifier", codeVerifier);
 
       const redirectUri = getRedirectUri();
-      const authUrl = `https://whop.com/oauth?client_id=${WHOP_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
-      window.location.href = authUrl;
+
+      const scopes = [
+        "user.profile",
+        "memberships.read",
+        "memberships.manage", // Required for n8n actions if needed
+        "affiliates.read"     // Useful for Dre Builds analytics
+      ];
+
+      const authUrl = new URL("https://whop.com/oauth");
+      authUrl.searchParams.append("client_id", WHOP_CLIENT_ID);
+      authUrl.searchParams.append("redirect_uri", redirectUri);
+      authUrl.searchParams.append("code_challenge", codeChallenge);
+      authUrl.searchParams.append("code_challenge_method", "S256");
+      authUrl.searchParams.append("scope", scopes.join(" "));
+
+      window.location.href = authUrl.toString();
     } catch (err) {
       console.error("Failed to initiate OAuth:", err);
     }

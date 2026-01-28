@@ -44,3 +44,17 @@ export default function Home() {
   if (!session) return <button onClick={signInWithWhop}>Sign in with Whop</button>;
   return <div>Welcome! <a href="/community">Join Community</a></div>;
 }
+
+Updated Deployment Plan
+6. Add security rules (whop/rules/security.md).
+7. Connect n8n for webhooks (whop-n8n-webhooks.md).
+8. Run analytics weekly (whop-analytics.md).
+9. Monitor updates via command.
+Real SDK Fixes
+
+Use @whop/sdk exact patterns.
+OAuth: Full PKCE flow per https://docs.whop.com/developer/guides/oauth
+Access check:
+
+JavaScriptawait client.checkAccess({ token: userToken, product_id: 'prod_xxx' });
+text
