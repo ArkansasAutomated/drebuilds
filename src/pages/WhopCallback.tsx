@@ -7,7 +7,13 @@ import { BlinkingCursor } from "@/components/ui/BlinkingCursor";
 import { CornerAccent } from "@/components/decorative/CornerAccent";
 import { Terminal, CheckCircle, XCircle } from "lucide-react";
 
-const REDIRECT_URI = "https://drebuilds.online/#/auth/whop/callback";
+const getRedirectUri = () => {
+  const origin = window.location.origin;
+  if (origin.includes("localhost") || origin.includes("127.0.0.1")) {
+    return `${origin}/#/auth/whop/callback`;
+  }
+  return "https://drebuilds.online/#/auth/whop/callback";
+};
 
 const WhopCallback = () => {
   const [searchParams] = useSearchParams();
@@ -52,7 +58,7 @@ const WhopCallback = () => {
         const { data, error: fnError } = await supabase.functions.invoke("whop-oauth", {
           body: {
             code,
-            redirect_uri: REDIRECT_URI,
+            redirect_uri: getRedirectUri(),
             code_verifier: codeVerifier, // Pass PKCE verifier
           },
         });
@@ -133,10 +139,10 @@ const WhopCallback = () => {
           {/* Header */}
           <div className="flex items-center gap-3 mb-8">
             <div className={`w-10 h-10 flex items-center justify-center rounded-sm border ${status === "processing"
-                ? "bg-surface-elevated border-primary/30"
-                : status === "success"
-                  ? "bg-success/10 border-success/30"
-                  : "bg-destructive/10 border-destructive/30"
+              ? "bg-surface-elevated border-primary/30"
+              : status === "success"
+                ? "bg-success/10 border-success/30"
+                : "bg-destructive/10 border-destructive/30"
               }`}>
               {status === "processing" && <Terminal className="w-5 h-5 text-primary" />}
               {status === "success" && <CheckCircle className="w-5 h-5 text-success" />}

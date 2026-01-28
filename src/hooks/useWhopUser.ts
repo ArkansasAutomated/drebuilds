@@ -54,7 +54,14 @@ interface WhopUserState {
 // Public OAuth config values
 const WHOP_CLIENT_ID = "app_ndC8gk4czaoeFG";
 const WHOP_COMPANY_ID = "biz_LBZIL5SNocl6WR";
-const REDIRECT_URI = "https://drebuilds.online/#/auth/whop/callback";
+
+const getRedirectUri = () => {
+  const origin = window.location.origin;
+  if (origin.includes("localhost") || origin.includes("127.0.0.1")) {
+    return `${origin}/#/auth/whop/callback`;
+  }
+  return "https://drebuilds.online/#/auth/whop/callback";
+};
 
 export const useWhopUser = () => {
   const { user } = useAuth();
@@ -172,7 +179,8 @@ export const useWhopUser = () => {
       // Store verifier for callback handling
       window.sessionStorage.setItem("whop_code_verifier", codeVerifier);
 
-      const authUrl = `https://whop.com/oauth?client_id=${WHOP_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
+      const redirectUri = getRedirectUri();
+      const authUrl = `https://whop.com/oauth?client_id=${WHOP_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
       window.location.href = authUrl;
     } catch (err) {
       console.error("Failed to initiate OAuth:", err);

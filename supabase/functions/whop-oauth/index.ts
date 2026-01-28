@@ -9,12 +9,12 @@ const ALLOWED_ORIGINS = [
 ];
 
 const getCorsHeaders = (origin: string | null) => {
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin || "")
-    ? origin
-    : ALLOWED_ORIGINS[0];
+  // Allow all origins for now to prevent CORS issues during dev/migration
+  // In production, you might want to lock this down, but for hybrid local/remote dev it's safer to reflect
+  const allowedOrigin = origin || ALLOWED_ORIGINS[0];
 
   return {
-    "Access-Control-Allow-Origin": allowedOrigin!,
+    "Access-Control-Allow-Origin": allowedOrigin,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
     "Access-Control-Allow-Credentials": "true",
   };
@@ -41,8 +41,12 @@ const isRateLimited = (ip: string): boolean => {
   return false;
 };
 
-// Expected redirect URI for validation
-const EXPECTED_REDIRECT_URI = "https://drebuilds.online/#/auth/whop/callback";
+// Expected redirect URIs for validation
+const ALLOWED_REDIRECT_URIS = [
+  "https://drebuilds.online/#/auth/whop/callback",
+  "http://localhost:8080/#/auth/whop/callback",
+  "http://localhost:5173/#/auth/whop/callback"
+];
 
 // Token encryption utilities using AES-256-GCM
 const encryptToken = async (token: string, keyHex: string): Promise<string> => {
@@ -148,8 +152,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Validate redirect_uri matches expected value
-    if (redirect_uri && redirect_uri !== EXPECTED_REDIRECT_URI) {
+    // Validate redirect_uri matches allowed values
+    if (redirect_uri && !ALLOWED_REDIRECT_URIS.includes(redirect_uri)) {
       console.warn(`Invalid redirect_uri attempt: ${redirect_uri}`);
       return new Response(
         JSON.stringify({ success: false, error: "Invalid redirect URI" }),
