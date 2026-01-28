@@ -39,3 +39,11 @@ Build Dre Builds, an AI education content platform for creators like Dre, with a
 
 ## DATABASE SCHEMA
 [From rules.md - paste complete schema here]
+
+## New: Whop Integration Subsystem
+- Path: whop/
+- Goal: Seamless API/infra setup for Dre Builds landing page (payments, subs, products, community, auth).
+- Master: whop/CLAUDE.md
+- Skills: 7 modular .md for auth, payments, delivery, community, apps, webhooks, orchestration.
+- Usage: Direct invoke in Claude Code (e.g., "Use whop-auth-setup for OAuth"). No deps on main skills.
+- MCP: Connects via Whop's Claude SSE endpoint for automated actions.
