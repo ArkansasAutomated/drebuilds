@@ -230,10 +230,39 @@ export const useWhopUser = () => {
       const redirectUri = getRedirectUri();
 
       const scopes = [
-        "user.profile",
-        "memberships.read",
-        "memberships.manage", // Required for n8n actions if needed
-        "affiliates.read"     // Useful for Dre Builds analytics
+        "chat:message:create",
+        "chat:read",
+        "dms:read",
+        "dms:message:manage",
+        "dms:channel:manage",
+        "company:balance:read",
+        "forum:post:create",
+        "forum:read",
+        "livestream:chat:read",
+        "livestream:chat:write",
+        "openid",
+        "profile",
+        "email",
+        "payout:create_destination",
+        "payout:delete_destination",
+        "payout:destination:read",
+        "payout:transfer:read",
+        "payout:transfer:export",
+        "payout:update_destination",
+        "payout:withdraw_funds",
+        "payout:withdrawal:read",
+        "payout:account:read",
+        "payout:account:update",
+        "support_chat:read",
+        "support_chat:message:create",
+        "user:balance:read",
+        "ai_chat:read",
+        "ai_chat:create",
+        "ai_chat:delete",
+        "ai_chat:update",
+        "memberships.read", // Preserving this to ensure access checks still work
+        "memberships.manage",
+        "affiliates.read"
       ];
 
       const authUrl = new URL("https://whop.com/oauth");
