@@ -20,6 +20,7 @@ interface WhopUserSafe {
       [key: string]: unknown;
     }>;
     last_synced?: string;
+    expires_at?: string;
   } | null;
   created_at: string | null;
   updated_at: string | null;
@@ -40,6 +41,7 @@ interface WhopUser {
       [key: string]: unknown;
     }>;
     last_synced?: string;
+    expires_at?: string;
   } | null;
 }
 
@@ -54,7 +56,14 @@ interface WhopUserState {
 // Public OAuth config values
 const WHOP_CLIENT_ID = "app_ndC8gk4czaoeFG";
 const WHOP_COMPANY_ID = "biz_LBZIL5SNocl6WR";
-const REDIRECT_URI = "https://drebuilds.online/#/auth/whop/callback";
+
+const getRedirectUri = () => {
+  const origin = window.location.origin;
+  if (origin.includes("localhost") || origin.includes("127.0.0.1")) {
+    return `${origin}/#/auth/whop/callback`;
+  }
+  return "https://drebuilds.online/#/auth/whop/callback";
+};
 
 export const useWhopUser = () => {
   const { user } = useAuth();
@@ -138,6 +147,52 @@ export const useWhopUser = () => {
     fetchWhopUser();
   }, [fetchWhopUser]);
 
+  // Token Auto-Refresh Logic
+  const refreshWhopToken = useCallback(async () => {
+    try {
+      console.log("Refreshing Whop token...");
+      const { data, error } = await supabase.functions.invoke("whop-oauth", {
+        body: { grant_type: "refresh_token" }
+      });
+
+      if (error || !data?.success) {
+        console.error("Failed to auto-refresh token:", error || data?.error);
+        return false;
+      }
+
+      console.log("Token refreshed successfully. New expiry:", data.expires_at);
+      fetchWhopUser(); // Reload user data to get new metadata
+      return true;
+    } catch (err) {
+      console.error("Error invoking refresh function:", err);
+      return false;
+    }
+  }, [fetchWhopUser]);
+
+  useEffect(() => {
+    if (!state.whopUser?.metadata?.expires_at) return;
+
+    const expiresAt = new Date(state.whopUser.metadata.expires_at).getTime();
+    const now = Date.now();
+    const timeUntilExpiry = expiresAt - now;
+
+    // Refresh 5 minutes before expiry
+    const REFRESH_BUFFER = 5 * 60 * 1000;
+
+    if (timeUntilExpiry < REFRESH_BUFFER) {
+      // Token is already expired or close to it
+      refreshWhopToken();
+    } else {
+      // Schedule refresh
+      const timeoutId = setTimeout(() => {
+        refreshWhopToken();
+      }, timeUntilExpiry - REFRESH_BUFFER);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [state.whopUser, refreshWhopToken]);
+
+
   // OAuth initiation function
   const initiateWhopOAuth = useCallback(async () => {
     if (!WHOP_CLIENT_ID) {
@@ -172,14 +227,15 @@ export const useWhopUser = () => {
       // Store verifier for callback handling
       window.sessionStorage.setItem("whop_code_verifier", codeVerifier);
 
-      const authUrl = `https://whop.com/oauth?client_id=${WHOP_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
+      const redirectUri = getRedirectUri();
+      const authUrl = `https://whop.com/oauth?client_id=${WHOP_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
       window.location.href = authUrl;
     } catch (err) {
       console.error("Failed to initiate OAuth:", err);
     }
   }, []);
 
-  // Refresh Whop user data
+  // Refresh Whop user data (manual)
   const refreshWhopUser = useCallback(() => {
     setState(prev => ({ ...prev, isLoading: true }));
     fetchWhopUser();
@@ -189,5 +245,6 @@ export const useWhopUser = () => {
     ...state,
     initiateWhopOAuth,
     refreshWhopUser,
+    refreshWhopToken, // Exported for manual testing
   };
 };
