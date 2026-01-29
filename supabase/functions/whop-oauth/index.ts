@@ -2,8 +2,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Allowed origins for CORS
+// Allowed origins for CORS
 const ALLOWED_ORIGINS = [
   "https://drebuilds.online",
+  "https://www.drebuilds.online",
   "https://drebuilds.lovable.app",
   "http://localhost:5173",
   "http://localhost:8080",
@@ -45,8 +47,10 @@ const isRateLimited = (ip: string): boolean => {
 };
 
 // Expected redirect URIs for validation
+// Expected redirect URIs for validation
 const ALLOWED_REDIRECT_URIS = [
   "https://drebuilds.online/#/auth/whop/callback",
+  "https://www.drebuilds.online/#/auth/whop/callback",
   "http://localhost:8080/#/auth/whop/callback",
   "http://localhost:5173/#/auth/whop/callback",
   "http://127.0.0.1:8080/#/auth/whop/callback",

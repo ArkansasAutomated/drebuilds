@@ -59,9 +59,16 @@ const WHOP_COMPANY_ID = "biz_LBZIL5SNocl6WR";
 
 const getRedirectUri = () => {
   const origin = window.location.origin;
-  if (origin.includes("localhost") || origin.includes("127.0.0.1")) {
+  // Dynamic handling for localhost and production (www and non-www)
+  if (
+    origin.includes("localhost") ||
+    origin.includes("127.0.0.1") ||
+    origin === "https://drebuilds.online" ||
+    origin === "https://www.drebuilds.online"
+  ) {
     return `${origin}/#/auth/whop/callback`;
   }
+  // Fallback to non-www if unknown origin (e.g. preview deployment)
   return "https://drebuilds.online/#/auth/whop/callback";
 };
 
