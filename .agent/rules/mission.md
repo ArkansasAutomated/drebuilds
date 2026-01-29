@@ -52,3 +52,11 @@ Build Dre Builds, an AI education content platform for creators like Dre, with a
 - Security rules, analytics (churn/ROI), n8n webhook automation, update monitoring.
 - Real @whop/sdk code patterns – ready for live deploy.
 - Prioritize: Test analytics skill → expect instant visibility on subscription health (<10% churn target).
+
+## New: n8n Integration Subsystem
+- Path: n8n/
+- Goal: Agent skills for n8n MCP calls – fetch docs via Context7, design/construct/execute workflows.
+- Master: n8n/CLAUDE.md
+- Skills: 6 modular .md for doc fetch, design, build, trigger, debug, orchestration.
+- Usage: Direct invoke (e.g., "Use n8n-doc-fetch for latest LLM nodes"). MCP-connected for real actions.
+- ROI: 2x faster workflow creation with always-current docs – target <1hr from idea to live.

@@ -117,4 +117,12 @@ Always:
 - Human approval: Before live key use or webhook endpoint deploy.
 - Ban: No public exposure of tokens or user data.
 
+## New: n8n Integration Subsystem
+- Path: n8n/
+- Goal: Agent skills for n8n MCP calls – fetch docs via Context7, design/construct/execute workflows.
+- Master: n8n/CLAUDE.md
+- Skills: 6 modular .md for doc fetch, design, build, trigger, debug, orchestration.
+- Usage: Direct invoke (e.g., "Use n8n-doc-fetch for latest LLM nodes"). MCP-connected for real actions.
+- ROI: 2x faster workflow creation with always-current docs – target <1hr from idea to live.
+
 Enforce in all whop/ skills.
