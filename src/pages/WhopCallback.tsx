@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,8 +28,14 @@ const WhopCallback = () => {
   const [message, setMessage] = useState("initializing_oauth_flow");
   const [errorDetail, setErrorDetail] = useState<string | null>(null);
 
+  const processingRef = useRef(false);
+
   useEffect(() => {
     const handleCallback = async () => {
+      // Prevent double-execution (React Strict Mode)
+      if (processingRef.current) return;
+      processingRef.current = true;
+
       // Whop puts the code in window.location.search (before the hash)
       // e.g., /?code=ABC123#/auth/whop/callback
       // React Router's useSearchParams only reads params after the hash
