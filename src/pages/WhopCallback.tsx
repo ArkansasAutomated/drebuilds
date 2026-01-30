@@ -32,10 +32,6 @@ const WhopCallback = () => {
 
   useEffect(() => {
     const handleCallback = async () => {
-      // Prevent double-execution (React Strict Mode)
-      if (processingRef.current) return;
-      processingRef.current = true;
-
       // Whop puts the code in window.location.search (before the hash)
       // e.g., /?code=ABC123#/auth/whop/callback
       // React Router's useSearchParams only reads params after the hash
@@ -43,6 +39,13 @@ const WhopCallback = () => {
 
       // Try window.location.search first, fall back to hash-based params
       const code = windowParams.get("code") || searchParams.get("code");
+
+      // Prevent double-execution (React Strict Mode or Remounts)
+      if (!code || processingRef.current || window.sessionStorage.getItem(`whop_code_processed_${code}`)) {
+        return;
+      }
+      processingRef.current = true;
+      window.sessionStorage.setItem(`whop_code_processed_${code}`, "true");
       const error = windowParams.get("error") || searchParams.get("error");
       const errorDescription = windowParams.get("error_description") || searchParams.get("error_description");
 
@@ -65,9 +68,11 @@ const WhopCallback = () => {
 
       try {
         const codeVerifier = window.localStorage.getItem("whop_code_verifier");
+        const origin = window.location.origin;
         const redirectUri = getRedirectUri();
 
         console.log("Diagnostic: Starting token exchange", {
+          current_origin: origin,
           code_received: !!code,
           code_length: code?.length,
           verifier_present: !!codeVerifier,

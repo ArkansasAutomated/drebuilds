@@ -236,6 +236,12 @@ export const useWhopUser = () => {
 
       const redirectUri = getRedirectUri();
 
+      console.log("Diagnostic: Initiating Whop OAuth", {
+        starting_origin: window.location.origin,
+        redirect_uri: redirectUri,
+        client_id: WHOP_CLIENT_ID
+      });
+
       const scopes = [
         "chat:message:create",
         "chat:read",
