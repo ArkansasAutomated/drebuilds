@@ -163,6 +163,18 @@ Deno.serve(async (req) => {
     const encryptionKey = Deno.env.get("TOKEN_ENCRYPTION_KEY");
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || req.headers.get("apikey") || ""; // Need anon key for user verification
 
+    const isCodeGrant = !grant_type || grant_type === "authorization_code";
+
+    if (isCodeGrant) {
+      console.log("Diagnostic: Backend Exchange Parameters", {
+        clientId: clientId,
+        redirectUriReceived: redirect_uri,
+        codeSnippet: code ? `${code.substring(0, 5)}...` : "missing",
+        hasVerifier: !!code_verifier,
+        verifierLength: code_verifier?.length
+      });
+    }
+
     if (!clientId || !clientSecret || !encryptionKey) {
       return new Response(
         JSON.stringify({ success: false, error: "Server configuration missing" }),
@@ -338,7 +350,7 @@ Deno.serve(async (req) => {
     console.log("Token exchange response status:", tokenResponse.status);
 
     if (!tokenData.access_token) {
-      console.error("Token exchange failed:", tokenData);
+      console.error("Token exchange failed DETAILS:", JSON.stringify(tokenData));
       return new Response(
         JSON.stringify({
           success: false,

@@ -231,8 +231,8 @@ export const useWhopUser = () => {
       const codeVerifier = generateRandomString(128);
       const codeChallenge = await generateCodeChallenge(codeVerifier);
 
-      // Store verifier for callback handling
-      window.sessionStorage.setItem("whop_code_verifier", codeVerifier);
+      // Store verifier for callback handling - Use localStorage for better persistence across potential subdomain redirects
+      window.localStorage.setItem("whop_code_verifier", codeVerifier);
 
       const redirectUri = getRedirectUri();
 

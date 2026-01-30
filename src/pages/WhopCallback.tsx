@@ -64,19 +64,32 @@ const WhopCallback = () => {
       setMessage("exchanging_tokens");
 
       try {
-        const codeVerifier = window.sessionStorage.getItem("whop_code_verifier");
+        const codeVerifier = window.localStorage.getItem("whop_code_verifier");
+        const redirectUri = getRedirectUri();
+
+        console.log("Diagnostic: Starting token exchange", {
+          code_received: !!code,
+          code_length: code?.length,
+          verifier_present: !!codeVerifier,
+          verifier_length: codeVerifier?.length,
+          redirect_uri: redirectUri
+        });
+
+        if (!codeVerifier) {
+          console.error("Critical: PKCE Verifier missing from storage. This will cause an invalid_grant error.");
+        }
 
         // Call Edge Function to handle OAuth token exchange
         const { data, error: fnError } = await supabase.functions.invoke("whop-oauth", {
           body: {
             code,
-            redirect_uri: getRedirectUri(),
+            redirect_uri: redirectUri,
             code_verifier: codeVerifier, // Pass PKCE verifier
           },
         });
 
         // Clean up verifier
-        window.sessionStorage.removeItem("whop_code_verifier");
+        window.localStorage.removeItem("whop_code_verifier");
 
         if (fnError) {
           console.error("Edge function error:", fnError);
