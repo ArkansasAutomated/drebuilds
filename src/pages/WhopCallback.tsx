@@ -9,16 +9,16 @@ import { Terminal, CheckCircle, XCircle } from "lucide-react";
 
 const getRedirectUri = () => {
   const origin = window.location.origin;
-  // Dynamic handling for localhost and production (www and non-www)
+  // Use clean paths (no hash) for OAuth 2.1 compliance
   if (
     origin.includes("localhost") ||
     origin.includes("127.0.0.1") ||
     origin === "https://drebuilds.online" ||
     origin === "https://www.drebuilds.online"
   ) {
-    return `${origin}/#/auth/whop/callback`;
+    return `${origin}/auth/whop/callback`;
   }
-  return "https://drebuilds.online/#/auth/whop/callback";
+  return "https://drebuilds.online/auth/whop/callback";
 };
 
 const WhopCallback = () => {
@@ -32,13 +32,12 @@ const WhopCallback = () => {
 
   useEffect(() => {
     const handleCallback = async () => {
-      // Whop puts the code in window.location.search (before the hash)
-      // e.g., /?code=ABC123#/auth/whop/callback
-      // React Router's useSearchParams only reads params after the hash
-      const windowParams = new URLSearchParams(window.location.search);
+      // With BrowserRouter, params come directly in window.location.search
+      const urlParams = new URLSearchParams(window.location.search);
 
-      // Try window.location.search first, fall back to hash-based params
-      const code = windowParams.get("code") || searchParams.get("code");
+      // Read code from URL params (works correctly with BrowserRouter)
+      const code = urlParams.get("code") || searchParams.get("code");
+      const returnedState = urlParams.get("state") || searchParams.get("state");
 
       // Prevent double-execution (React Strict Mode or Remounts)
       if (!code || processingRef.current || window.sessionStorage.getItem(`whop_code_processed_${code}`)) {
@@ -46,8 +45,9 @@ const WhopCallback = () => {
       }
       processingRef.current = true;
       window.sessionStorage.setItem(`whop_code_processed_${code}`, "true");
-      const error = windowParams.get("error") || searchParams.get("error");
-      const errorDescription = windowParams.get("error_description") || searchParams.get("error_description");
+
+      const error = urlParams.get("error") || searchParams.get("error");
+      const errorDescription = urlParams.get("error_description") || searchParams.get("error_description");
 
       if (error) {
         console.error("OAuth error from Whop:", error, errorDescription);
@@ -63,6 +63,17 @@ const WhopCallback = () => {
         setErrorDetail("Authorization code was not received from Whop");
         return;
       }
+
+      // Validate state parameter for CSRF protection
+      const savedState = window.sessionStorage.getItem("whop_oauth_state");
+      if (!returnedState || returnedState !== savedState) {
+        console.error("CSRF: State parameter mismatch", { returnedState, savedState });
+        setStatus("error");
+        setMessage("state_mismatch");
+        setErrorDetail("Security validation failed. Please try again.");
+        return;
+      }
+      window.sessionStorage.removeItem("whop_oauth_state");
 
       setMessage("exchanging_tokens");
 

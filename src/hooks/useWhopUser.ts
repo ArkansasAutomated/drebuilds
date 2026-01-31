@@ -59,17 +59,17 @@ const WHOP_COMPANY_ID = "biz_LBZIL5SNocl6WR";
 
 const getRedirectUri = () => {
   const origin = window.location.origin;
-  // Dynamic handling for localhost and production (www and non-www)
+  // Use clean paths (no hash) for OAuth 2.1 compliance
   if (
     origin.includes("localhost") ||
     origin.includes("127.0.0.1") ||
     origin === "https://drebuilds.online" ||
     origin === "https://www.drebuilds.online"
   ) {
-    return `${origin}/#/auth/whop/callback`;
+    return `${origin}/auth/whop/callback`;
   }
-  // Fallback to non-www if unknown origin (e.g. preview deployment)
-  return "https://drebuilds.online/#/auth/whop/callback";
+  // Fallback to non-www if unknown origin
+  return "https://drebuilds.online/auth/whop/callback";
 };
 
 export const useWhopUser = () => {
@@ -242,48 +242,26 @@ export const useWhopUser = () => {
         client_id: WHOP_CLIENT_ID
       });
 
+      // Essential scopes only - reduced from 28 to prevent rejection
       const scopes = [
-        "chat:message:create",
-        "chat:read",
-        "dms:read",
-        "dms:message:manage",
-        "dms:channel:manage",
-        "company:balance:read",
-        "forum:post:create",
-        "forum:read",
-        "livestream:chat:read",
-        "livestream:chat:write",
         "openid",
         "profile",
         "email",
-        "payout:create_destination",
-        "payout:delete_destination",
-        "payout:destination:read",
-        "payout:transfer:read",
-        "payout:transfer:export",
-        "payout:update_destination",
-        "payout:withdraw_funds",
-        "payout:withdrawal:read",
-        "payout:account:read",
-        "payout:account:update",
-        "support_chat:read",
-        "support_chat:message:create",
-        "user:balance:read",
-        "ai_chat:read",
-        "ai_chat:create",
-        "ai_chat:delete",
-        "ai_chat:update",
-        "memberships.read", // Preserving this to ensure access checks still work
-        "memberships.manage",
-        "affiliates.read"
+        "memberships.read"
       ];
 
+      // Generate state for CSRF protection (OAuth 2.1 requirement)
+      const state = generateRandomString(32);
+      window.sessionStorage.setItem("whop_oauth_state", state);
+
       const authUrl = new URL("https://whop.com/oauth");
+      authUrl.searchParams.append("response_type", "code"); // OAuth 2.1 requirement
       authUrl.searchParams.append("client_id", WHOP_CLIENT_ID);
       authUrl.searchParams.append("redirect_uri", redirectUri);
       authUrl.searchParams.append("code_challenge", codeChallenge);
       authUrl.searchParams.append("code_challenge_method", "S256");
       authUrl.searchParams.append("scope", scopes.join(" "));
+      authUrl.searchParams.append("state", state);
 
       window.location.href = authUrl.toString();
     } catch (err) {

@@ -46,15 +46,14 @@ const isRateLimited = (ip: string): boolean => {
   return false;
 };
 
-// Expected redirect URIs for validation
-// Expected redirect URIs for validation
+// Expected redirect URIs for validation (clean paths, no hash)
 const ALLOWED_REDIRECT_URIS = [
-  "https://drebuilds.online/#/auth/whop/callback",
-  "https://www.drebuilds.online/#/auth/whop/callback",
-  "http://localhost:8080/#/auth/whop/callback",
-  "http://localhost:5173/#/auth/whop/callback",
-  "http://127.0.0.1:8080/#/auth/whop/callback",
-  "http://127.0.0.1:5173/#/auth/whop/callback"
+  "https://drebuilds.online/auth/whop/callback",
+  "https://www.drebuilds.online/auth/whop/callback",
+  "http://localhost:8080/auth/whop/callback",
+  "http://localhost:5173/auth/whop/callback",
+  "http://127.0.0.1:8080/auth/whop/callback",
+  "http://127.0.0.1:5173/auth/whop/callback"
 ];
 
 // Token encryption utilities using AES-256-GCM
