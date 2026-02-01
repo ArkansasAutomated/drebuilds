@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // Allowed origins for CORS
 const ALLOWED_ORIGINS = [
   "https://drebuilds.online",
+  "https://www.drebuilds.online",
   "https://drebuilds.lovable.app",
   "http://localhost:5173",
   "http://localhost:8080",
@@ -12,9 +13,9 @@ const getCorsHeaders = (origin: string | null) => {
   // Allow Lovable preview origins dynamically
   const isLovablePreview = origin?.endsWith('.lovableproject.com');
   const isAllowed = ALLOWED_ORIGINS.includes(origin || "") || isLovablePreview;
-  
+
   const allowedOrigin = isAllowed ? origin : ALLOWED_ORIGINS[0];
-  
+
   return {
     "Access-Control-Allow-Origin": allowedOrigin!,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -70,7 +71,7 @@ interface WhopPlansResponse {
 Deno.serve(async (req) => {
   const origin = req.headers.get("Origin");
   const corsHeaders = getCorsHeaders(origin);
-  
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -152,7 +153,7 @@ Deno.serve(async (req) => {
     // POST /checkout - Create checkout configuration (proper SDK pattern)
     if (req.method === "POST" && path === "checkout") {
       const authHeader = req.headers.get("Authorization");
-      
+
       // Optional: Validate JWT for authenticated users
       let userId: string | null = null;
       if (authHeader) {
@@ -200,10 +201,10 @@ Deno.serve(async (req) => {
       if (!checkoutResponse.ok) {
         const errorText = await checkoutResponse.text();
         console.error("[whop-products] Checkout config creation failed:", checkoutResponse.status, errorText);
-        
+
         // Fallback: If checkout_configurations fails, use the plan's direct purchase URL
         console.log("[whop-products] Attempting fallback to direct checkout URL...");
-        
+
         const planResponse = await fetch(
           `https://api.whop.com/api/v2/plans/${plan_id}`,
           {

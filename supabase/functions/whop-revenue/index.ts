@@ -3,16 +3,17 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // Allowed origins for CORS
 const ALLOWED_ORIGINS = [
   "https://drebuilds.online",
+  "https://www.drebuilds.online",
   "https://drebuilds.lovable.app",
   "http://localhost:5173",
   "http://localhost:8080",
 ];
 
 const getCorsHeaders = (origin: string | null) => {
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin || "") 
-    ? origin 
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin || "")
+    ? origin
     : ALLOWED_ORIGINS[0];
-  
+
   return {
     "Access-Control-Allow-Origin": allowedOrigin!,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -45,7 +46,7 @@ interface DailyRevenue {
 Deno.serve(async (req) => {
   const origin = req.headers.get("Origin");
   const corsHeaders = getCorsHeaders(origin);
-  
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -130,7 +131,7 @@ Deno.serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("[whop-revenue] Whop API error:", response.status, errorText);
-      
+
       // Return empty data structure for graceful degradation
       return new Response(
         JSON.stringify({
@@ -149,10 +150,10 @@ Deno.serve(async (req) => {
 
     // Aggregate payments by day
     const dailyMap = new Map<string, DailyRevenue>();
-    
+
     for (const payment of data.data || []) {
       if (payment.status !== "paid") continue;
-      
+
       const date = new Date(payment.created_at * 1000).toISOString().split("T")[0];
       const amount = payment.amount / 100; // Convert cents to dollars
 

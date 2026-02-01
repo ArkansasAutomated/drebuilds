@@ -3,16 +3,17 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // Allowed origins for CORS
 const ALLOWED_ORIGINS = [
   "https://drebuilds.online",
+  "https://www.drebuilds.online",
   "https://drebuilds.lovable.app",
   "http://localhost:5173",
   "http://localhost:8080",
 ];
 
 const getCorsHeaders = (origin: string | null) => {
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin || "") 
-    ? origin 
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin || "")
+    ? origin
     : ALLOWED_ORIGINS[0];
-  
+
   return {
     "Access-Control-Allow-Origin": allowedOrigin!,
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -23,7 +24,7 @@ const getCorsHeaders = (origin: string | null) => {
 Deno.serve(async (req) => {
   const origin = req.headers.get("Origin");
   const corsHeaders = getCorsHeaders(origin);
-  
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -32,16 +33,16 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    
+
     // Get admin credentials from secrets (not hardcoded)
     const adminEmail = Deno.env.get("ADMIN_EMAIL");
     const adminPassword = Deno.env.get("ADMIN_PASSWORD");
-    
+
     if (!adminEmail || !adminPassword) {
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "ADMIN_EMAIL and ADMIN_PASSWORD secrets must be configured" 
+        JSON.stringify({
+          success: false,
+          error: "ADMIN_EMAIL and ADMIN_PASSWORD secrets must be configured"
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -61,7 +62,7 @@ Deno.serve(async (req) => {
 
     if (existingUser) {
       console.log("User exists, updating password...");
-      
+
       // Update password to ensure it matches
       const { error: updateError } = await supabase.auth.admin.updateUserById(
         existingUser.id,
@@ -91,10 +92,10 @@ Deno.serve(async (req) => {
       console.log("Admin role verified");
 
       return new Response(
-        JSON.stringify({ 
-          success: true, 
+        JSON.stringify({
+          success: true,
           message: "Admin password reset and role verified",
-          userId: existingUser.id 
+          userId: existingUser.id
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -131,10 +132,10 @@ Deno.serve(async (req) => {
     console.log("Admin role assigned successfully");
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         message: "Admin user created and role assigned",
-        userId: authData.user.id 
+        userId: authData.user.id
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
