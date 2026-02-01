@@ -337,6 +337,17 @@ Deno.serve(async (req) => {
       tokenParams.append("code_verifier", code_verifier);
     }
 
+    // Enhanced logging for debugging
+    console.log("TOKEN EXCHANGE REQUEST:", {
+      endpoint: "https://api.whop.com/oauth/token",
+      grant_type: "authorization_code",
+      code_prefix: code?.substring(0, 8) + "...",
+      redirect_uri: redirect_uri,
+      has_code_verifier: !!code_verifier,
+      verifier_length: code_verifier?.length,
+      client_id: clientId
+    });
+
     const tokenResponse = await fetch("https://api.whop.com/oauth/token", {
       method: "POST",
       headers: {

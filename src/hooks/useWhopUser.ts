@@ -228,18 +228,24 @@ export const useWhopUser = () => {
     };
 
     try {
+      // Clear any stale OAuth data from previous attempts
+      window.localStorage.removeItem("whop_code_verifier");
+      window.localStorage.removeItem("whop_redirect_uri");
+      window.sessionStorage.removeItem("whop_oauth_state");
+
       const codeVerifier = generateRandomString(128);
       const codeChallenge = await generateCodeChallenge(codeVerifier);
-
-      // Store verifier for callback handling - Use localStorage for better persistence across potential subdomain redirects
-      window.localStorage.setItem("whop_code_verifier", codeVerifier);
-
       const redirectUri = getRedirectUri();
+
+      // Store verifier AND redirect_uri to ensure exact match during token exchange
+      window.localStorage.setItem("whop_code_verifier", codeVerifier);
+      window.localStorage.setItem("whop_redirect_uri", redirectUri);
 
       console.log("Diagnostic: Initiating Whop OAuth", {
         starting_origin: window.location.origin,
         redirect_uri: redirectUri,
-        client_id: WHOP_CLIENT_ID
+        client_id: WHOP_CLIENT_ID,
+        verifier_stored: true
       });
 
       // Essential scopes only - reduced from 28 to prevent rejection

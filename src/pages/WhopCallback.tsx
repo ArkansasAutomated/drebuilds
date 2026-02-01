@@ -79,20 +79,26 @@ const WhopCallback = () => {
 
       try {
         const codeVerifier = window.localStorage.getItem("whop_code_verifier");
-        const origin = window.location.origin;
-        const redirectUri = getRedirectUri();
+        // Use the STORED redirect_uri to ensure exact match with authorization request
+        const storedRedirectUri = window.localStorage.getItem("whop_redirect_uri");
+        const redirectUri = storedRedirectUri || getRedirectUri();
 
         console.log("Diagnostic: Starting token exchange", {
-          current_origin: origin,
+          current_origin: window.location.origin,
           code_received: !!code,
           code_length: code?.length,
           verifier_present: !!codeVerifier,
           verifier_length: codeVerifier?.length,
-          redirect_uri: redirectUri
+          redirect_uri: redirectUri,
+          used_stored_uri: !!storedRedirectUri
         });
 
         if (!codeVerifier) {
           console.error("Critical: PKCE Verifier missing from storage. This will cause an invalid_grant error.");
+        }
+
+        if (!storedRedirectUri) {
+          console.warn("Warning: Using computed redirect_uri as stored value was not found.");
         }
 
         // Call Edge Function to handle OAuth token exchange
@@ -104,8 +110,9 @@ const WhopCallback = () => {
           },
         });
 
-        // Clean up verifier
+        // Clean up OAuth storage
         window.localStorage.removeItem("whop_code_verifier");
+        window.localStorage.removeItem("whop_redirect_uri");
 
         if (fnError) {
           console.error("Edge function error:", fnError);
