@@ -233,7 +233,7 @@ export const useWhopUser = () => {
       window.localStorage.removeItem("whop_redirect_uri");
       window.sessionStorage.removeItem("whop_oauth_state");
 
-      const codeVerifier = generateRandomString(128);
+      const codeVerifier = generateRandomString(64);
       const codeChallenge = await generateCodeChallenge(codeVerifier);
       const redirectUri = getRedirectUri();
 
