@@ -13,7 +13,7 @@ interface ExitIntentOverlayProps {
 
 const MESSAGES = [
   "> ALERT: Connection termination detected.",
-  "> Before you disconnect, would you like to clone the latest Agentic Blueprint?",
+  "> Before you disconnect, claim your free AI Automation Audit.",
 ];
 
 const TYPING_SPEED_MS = 20;
@@ -211,7 +211,7 @@ export const ExitIntentOverlay = ({
                     onClick={handleAccept}
                     className="flex-1 px-6 py-3 bg-primary text-primary-foreground font-mono text-sm font-bold border border-primary hover:bg-primary/90 transition-all duration-200 glow-amber"
                   >
-                    [ACCEPT_TRANSFER]
+                    [GET_FREE_AUDIT]
                   </button>
                   <button
                     onClick={handleDismiss}

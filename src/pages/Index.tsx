@@ -6,7 +6,6 @@ import { LogicGatesSection } from "@/components/sections/LogicGatesSection";
 import { ContentMarquee } from "@/components/sections/ContentMarquee";
 import { TechStackSection } from "@/components/sections/TechStackSection";
 import { NewsletterSection } from "@/components/sections/NewsletterSection";
-import { TestimonialsSection } from "@/components/sections/TestimonialsSection";
 import { FooterSection } from "@/components/sections/FooterSection";
 import { MobileCommandCenter } from "@/components/navigation/MobileCommandCenter";
 import { ScrollReactiveGrid } from "@/components/effects/ScrollReactiveGrid";
@@ -48,15 +47,6 @@ const Index = () => {
     }
   }, [isBooted]);
 
-  const handleAcceptTransfer = () => {
-    setShowExitIntent(false);
-    // Scroll to newsletter section
-    setTimeout(() => {
-      const newsletter = document.getElementById("newsletter");
-      newsletter?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
-  };
-
   const handleDisconnect = () => {
     setShowExitIntent(false);
   };
@@ -75,9 +65,6 @@ const Index = () => {
             <section id="newsletter">
               <NewsletterSection />
             </section>
-            <section id="testimonials">
-              <TestimonialsSection />
-            </section>
             <FooterSection />
             <MobileCommandCenter />
           </main>
@@ -87,7 +74,10 @@ const Index = () => {
       {/* Exit Intent Overlay - rendered outside scroll container */}
       <ExitIntentOverlay
         isOpen={showExitIntent}
-        onAccept={handleAcceptTransfer}
+        onAccept={() => {
+          setShowExitIntent(false);
+          window.location.assign("/audit");
+        }}
         onDismiss={handleDisconnect}
       />
     </>

@@ -1,209 +1,64 @@
 import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
-import { TextSwapButton } from "@/components/ui/TextSwapButton";
-import { CornerAccent } from "@/components/decorative/CornerAccent";
 import { Cpu, Users, Package, Video } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { CornerAccent } from "@/components/decorative/CornerAccent";
+import { TextSwapButton } from "@/components/ui/TextSwapButton";
 
-const springConfig = {
-  mass: 1,
-  stiffness: 120,
-  damping: 14,
-};
-
-// Direct links — no payment provider, no API calls. Update URLs here when
-// community/store/learn destinations are ready.
-const defaultOffers = [
-  {
-    id: "consulting",
-    title: "Business Systems Architecture",
-    description: "Custom automation frameworks designed for your unique business logic. From workflow mapping to full implementation.",
-    icon: Cpu,
-    price: "$500",
-    defaultCTA: "Book Architecture Session",
-    hoverCTA: "initialize_consult()",
-    accent: "Consulting",
-    link: "https://cal.com/drebuilds",
-  },
-  {
-    id: "community",
-    title: "Agentic Engineering Hub",
-    description: "Join a community of builders creating the next generation of intelligent automation systems.",
-    icon: Users,
-    price: "Free",
-    defaultCTA: "Join the Builders",
-    hoverCTA: "git clone community",
-    accent: "Community",
-    link: "mailto:community@drebuilds.online?subject=Agentic%20Engineering%20Hub%20%E2%80%94%20Sign%20me%20up",
-  },
-  {
-    id: "store",
-    title: "Plug-and-Play Logic",
-    description: "Pre-built automation templates and digital products ready to deploy in your workflow stack.",
-    icon: Package,
-    price: "From $29",
-    defaultCTA: "Enter Store",
-    hoverCTA: "cat ./inventory",
-    accent: "Store",
-    link: "mailto:store@drebuilds.online?subject=Store%20inquiry",
-  },
-  {
-    id: "learn",
-    title: "Content & Education",
-    description: "Deep-dive tutorials, raw code sessions, and weekly automation breakdowns to level up your skills.",
-    icon: Video,
-    price: "Free",
-    defaultCTA: "Learn Automation",
-    hoverCTA: "man automation",
-    accent: "Learn",
-    link: "https://youtube.com/@drebuilds",
-  },
+const defaults = [
+  { id: "consulting", title: "Automation Consulting", description: "Map the repetitive work, design the system, and implement automations around your real operations.", price: "Free audit", icon: Cpu, cta: "Get Your Free Audit", link: "/audit", external: false },
+  { id: "community", title: "Builder Community", description: "The next community home is being evaluated. Join the newsletter and be first to know when it opens.", price: "Coming soon", icon: Users, cta: "Join the Newsletter", link: "#newsletter", external: false },
+  { id: "store", title: "Automation Templates", description: "Production-ready templates are being rebuilt. Join the list for the first release.", price: "Coming soon", icon: Package, cta: "Get Updates", link: "#newsletter", external: false },
+  { id: "learn", title: "Content & Education", description: "Practical tutorials, raw build sessions, and automation breakdowns for operators and builders.", price: "Free", icon: Video, cta: "Learn Automation", link: "https://youtube.com/@drebuilds", external: true },
 ];
 
-const iconMap: Record<string, typeof Cpu> = {
-  consulting: Cpu,
-  community: Users,
-  store: Package,
-  learn: Video,
-};
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-    },
-  },
-};
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { type: "spring" as const, ...springConfig },
-  },
-};
-
 export const LogicGatesSection = () => {
-  // Fetch local offer settings — admins can override defaults from the OfferEditor.
-  const { data: dbOffers } = useQuery({
+  const { data } = useQuery({
     queryKey: ["offer-settings"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("offer_settings")
-        .select("*")
-        .eq("is_active", true);
+      const { data, error } = await supabase.from("offer_settings").select("*").eq("is_active", true);
       if (error) throw error;
       return data;
     },
   });
 
-  // Merge DB overrides with defaults. No external API calls.
-  const offers = defaultOffers.map((defaultOffer) => {
-    const dbOffer = dbOffers?.find((o) => o.id === defaultOffer.id);
+  const offers = defaults.map((offer) => {
+    const configured = data?.find((item) => item.id === offer.id);
+    const unsafeLegacyLink = configured?.link?.startsWith("/");
     return {
-      ...defaultOffer,
-      title: dbOffer?.title || defaultOffer.title,
-      description: dbOffer?.description || defaultOffer.description,
-      price: dbOffer?.price || defaultOffer.price,
-      icon: iconMap[defaultOffer.id] || Cpu,
-      link: dbOffer?.link || defaultOffer.link,
+      ...offer,
+      title: configured?.title || offer.title,
+      description: configured?.description || offer.description,
+      price: configured?.price || offer.price,
+      link: !unsafeLegacyLink && configured?.link ? configured.link : offer.link,
     };
   });
 
-  const handleOfferClick = (offer: typeof offers[0]) => {
-    if (!offer.link) return;
-    // mailto: opens the user's mail client; http(s) opens in a new tab.
-    if (offer.link.startsWith("mailto:")) {
-      window.location.href = offer.link;
-    } else {
-      window.open(offer.link, "_blank", "noopener,noreferrer");
-    }
+  const open = (link: string, external: boolean) => {
+    if (link.startsWith("#")) return document.querySelector(link)?.scrollIntoView({ behavior: "smooth" });
+    if (external) window.open(link, "_blank", "noopener,noreferrer");
+    else window.location.assign(link);
   };
 
   return (
     <section id="logic-gates" className="relative py-24 md:py-32">
-      <div className="container mx-auto px-6 max-w-6xl">
-        <motion.div
-          className="section-label mb-4"
-          initial={{ opacity: 0, x: -20 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-        >
-          // LOGIC_GATES
-        </motion.div>
-
-        <motion.div
-          className="mb-12"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ type: "spring", ...springConfig }}
-        >
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Four Ways to <span className="text-primary">Build With Dre</span>
-          </h2>
-          <p className="text-muted-foreground max-w-xl">
-            Choose your entry point into the world of agentic engineering.
-          </p>
-        </motion.div>
-
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 gap-6"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-        >
-          {offers.map((offer) => (
-            <motion.div
-              key={offer.id}
-              variants={cardVariants}
-              className="relative group"
-            >
-              <div className="relative h-full p-8 bg-card border border-border rounded-sm overflow-hidden transition-all duration-300 hover:border-primary/50 hover:glow-amber-box">
-                <CornerAccent position="tl" size={20} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                <CornerAccent position="br" size={20} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-
-                <div className="absolute top-4 right-4">
-                  <span className="font-mono text-xs px-2 py-1 bg-primary/10 text-primary rounded-sm">
-                    {offer.accent}
-                  </span>
-                </div>
-
-                <div className="mb-6">
-                  <div className="w-12 h-12 flex items-center justify-center bg-surface-elevated rounded-sm border border-border group-hover:border-primary/50 transition-colors">
-                    <offer.icon className="w-6 h-6 text-primary" />
-                  </div>
-                </div>
-
-                <h3 className="text-xl font-semibold mb-3">{offer.title}</h3>
-                <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
-                  {offer.description}
-                </p>
-
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-lg text-primary">{offer.price}</span>
-                  <TextSwapButton
-                    defaultText={offer.defaultCTA}
-                    hoverText={offer.hoverCTA}
-                    variant="secondary"
-                    size="sm"
-                    trackingId={offer.id}
-                    onClick={() => handleOfferClick(offer)}
-                  />
-                </div>
-
-                <div className="absolute -bottom-4 -right-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                  <offer.icon className="w-32 h-32" />
-                </div>
-              </div>
-            </motion.div>
+      <div className="container mx-auto max-w-6xl px-6">
+        <div className="mb-12 max-w-2xl">
+          <h2 className="text-3xl font-bold md:text-5xl">Choose the next <span className="text-primary">operation.</span></h2>
+          <p className="mt-4 text-muted-foreground">Start with a free audit, then build only what removes real work from your week.</p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          {offers.map((offer, index) => (
+            <motion.article key={offer.id} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.08 }} className="relative border border-border bg-card p-7">
+              <CornerAccent position="tl" size={18} />
+              <offer.icon className="mb-6 text-primary" />
+              <p className="font-mono text-xs text-primary">// {offer.price}</p>
+              <h3 className="mt-2 text-xl font-bold">{offer.title}</h3>
+              <p className="my-5 min-h-12 text-sm leading-relaxed text-muted-foreground">{offer.description}</p>
+              <TextSwapButton defaultText={offer.cta} hoverText={`run ${offer.id}()`} variant={index === 0 ? "primary" : "outline"} size="md" onClick={() => open(offer.link, offer.external)} />
+            </motion.article>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );

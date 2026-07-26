@@ -1,5 +1,7 @@
 import { motion } from "framer-motion";
-import { NewsletterCapture } from "@/components/newsletter/NewsletterCapture";
+import { CornerAccent } from "@/components/decorative/CornerAccent";
+import { NewsletterCapture } from "@/components/NewsletterCapture";
+import { Mail } from "lucide-react";
 
 const springConfig = {
   mass: 1,
@@ -7,19 +9,12 @@ const springConfig = {
   damping: 14,
 };
 
-/**
- * Landing-page newsletter section. Renders the full NewsletterCapture
- * variant (name + email, terminal aesthetic) wired to the hub list
- * (drebuilds_main). The actual form/validation/DB logic lives in the
- * capture component + useNewsletterSubscription — this file only owns
- * the section chrome and copy.
- */
 export const NewsletterSection = () => {
   return (
     <section className="relative py-24 md:py-32 bg-surface-elevated/30">
       {/* Background Grid */}
       <div className="absolute inset-0 bg-grid opacity-30" />
-
+      
       <div className="container mx-auto px-6 max-w-3xl relative z-10">
         {/* Section Label */}
         <motion.div
@@ -32,24 +27,46 @@ export const NewsletterSection = () => {
           // ALPHA_CHANNEL
         </motion.div>
 
+        {/* Content Card */}
         <motion.div
+          className="relative p-8 md:p-12 bg-card border border-border rounded-sm"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ type: "spring", ...springConfig }}
         >
-          <NewsletterCapture
-            variant="full"
-            listSlug="drebuilds_main"
-            source="landing_page"
-            title={
-              <>
-                Test the <span className="text-primary glow-amber">Waters</span>
-              </>
-            }
-            subtitle="Get exclusive builds, automation breakdowns, and early access to new systems. No spam, just signal."
-            successMessage="Welcome to the build log. Check your inbox."
-          />
+          {/* Corner Accents */}
+          <CornerAccent position="tl" size={28} />
+          <CornerAccent position="br" size={28} />
+
+          <div className="text-center">
+            {/* Icon */}
+            <motion.div
+              className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-sm mb-6"
+              initial={{ scale: 0 }}
+              whileInView={{ scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ type: "spring", ...springConfig, delay: 0.2 }}
+            >
+              <Mail className="w-8 h-8 text-primary" />
+            </motion.div>
+
+            {/* Header */}
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Test the <span className="text-primary glow-amber">Waters</span>
+            </h2>
+            <p className="text-muted-foreground mb-8 max-w-md mx-auto">
+              Get exclusive builds, automation breakdowns, and early access to new systems. 
+              No spam, just signal.
+            </p>
+
+            <NewsletterCapture listSlug="drebuilds_main" />
+
+            {/* Privacy Note */}
+            <p className="mt-6 text-xs text-muted-foreground">
+              <span className="font-mono text-primary/60">$</span> We respect your privacy. Unsubscribe anytime.
+            </p>
+          </div>
         </motion.div>
       </div>
     </section>

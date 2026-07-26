@@ -187,23 +187,6 @@ const Auth = () => {
             />
           </form>
 
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="bg-card px-2 text-muted-foreground font-mono">
-                // need_help
-              </span>
-            </div>
-          </div>
-
-          {/* Support Note */}
-          <p className="font-mono text-xs text-muted-foreground text-center">
-            having trouble? reach out at <a href="mailto:andre@drebuilds.online" className="text-primary hover:underline">andre@drebuilds.online</a>
-          </p>
-
           {/* Toggle Auth Mode */}
           <div className="mt-6 pt-6 border-t border-border">
             <button

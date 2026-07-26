@@ -2,3 +2,9 @@ project_id = "ahwqhaplgbjevpzhjhbd"
 
 [functions.setup-admin]
 verify_jwt = false
+
+[functions.lead-capture]
+verify_jwt = false
+
+[functions.capture-lead]
+verify_jwt = false

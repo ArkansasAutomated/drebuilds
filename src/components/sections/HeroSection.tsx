@@ -3,7 +3,8 @@ import { TextSwapButton } from "@/components/ui/TextSwapButton";
 import { BlinkingCursor } from "@/components/ui/BlinkingCursor";
 import { StatusDot } from "@/components/ui/StatusDot";
 import { CornerAccent } from "@/components/decorative/CornerAccent";
-import { ArrowRight, Code2, ChevronDown } from "lucide-react";
+import { ArrowRight, ClipboardCheck, ChevronDown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const springConfig = {
   mass: 1,
@@ -12,6 +13,7 @@ const springConfig = {
 };
 
 export const HeroSection = () => {
+  const navigate = useNavigate();
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Multi-layer Background */}
@@ -36,7 +38,7 @@ export const HeroSection = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
           >
-            &gt;_ system.architect.init()
+            &gt;_ arkansas.automation.init()
           </motion.div>
 
           {/* Main Headline */}
@@ -46,9 +48,9 @@ export const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring", ...springConfig, delay: 0.3 }}
           >
-            Building the Future,
+            Automate Your
             <br />
-            <span className="text-primary glow-amber">One Agent at a Time.</span>
+            <span className="text-primary glow-amber">Arkansas Business.</span>
             <BlinkingCursor className="hidden md:inline-block" />
           </motion.h1>
 
@@ -59,9 +61,7 @@ export const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring", ...springConfig, delay: 0.4 }}
           >
-            Software Developer. Automation Educator. Architect of Agentic Workflows.
-            <br className="hidden md:block" />
-            Transforming business logic into intelligent systems that scale.
+            Save time, reduce overhead, and scale without adding more repetitive work.
           </motion.p>
 
           {/* Status Indicator */}
@@ -71,7 +71,7 @@ export const HeroSection = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
           >
-            <StatusDot status="available" label="Available for architecture" />
+            <StatusDot status="available" label="Accepting automation audits" />
           </motion.div>
 
           {/* CTA Buttons */}
@@ -82,24 +82,21 @@ export const HeroSection = () => {
             transition={{ type: "spring", ...springConfig, delay: 0.6 }}
           >
             <TextSwapButton
-              defaultText="View My Builds"
-              hoverText="/exec_portfolio"
+              defaultText="Get Your Free Audit"
+              hoverText="run audit()"
               variant="primary"
               size="lg"
-              icon={<Code2 size={20} />}
-              onClick={() => {
-                const section = document.getElementById("logic-gates");
-                section?.scrollIntoView({ behavior: "smooth" });
-              }}
+              icon={<ClipboardCheck size={20} />}
+              onClick={() => navigate("/audit")}
             />
             <TextSwapButton
-              defaultText="Hire for Architecture"
-              hoverText="sudo hire --dre"
+              defaultText="Call Dre"
+              hoverText="dial 479-221-0524"
               variant="outline"
               size="lg"
               icon={<ArrowRight size={20} />}
               onClick={() => {
-                window.open("https://cal.com/drebuilds", "_blank", "noopener,noreferrer");
+                window.location.href = "tel:+14792210524";
               }}
             />
           </motion.div>

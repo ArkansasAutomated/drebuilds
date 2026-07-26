@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, Twitter, Youtube, Github } from "lucide-react";
+import { ChevronRight, Mail, Phone, Youtube, Github } from "lucide-react";
 import logoPrimary from "@/assets/brand/dre-builds-logo-primary-transparent.svg";
 
 const springConfig = {
@@ -12,14 +12,14 @@ const springConfig = {
 
 const navLinks = [
   { path: "~/home", label: "Home", href: "/" },
+  { path: "~/audit", label: "Free Audit", href: "/audit" },
   { path: "~/vault", label: "Vault", href: "/vault" },
   { path: "~/auth", label: "Login", href: "/auth" },
 ];
 
 const socialLinks = [
-  { name: "Twitter", icon: Twitter, href: "https://twitter.com/drebuilds", hoverText: "@drebuilds --follow" },
   { name: "YouTube", icon: Youtube, href: "https://youtube.com/@drebuilds", hoverText: "youtube --subscribe" },
-  { name: "GitHub", icon: Github, href: "https://github.com/drebuilds", hoverText: "gh follow drebuilds" },
+  { name: "GitHub", icon: Github, href: "https://github.com/swiftautomators", hoverText: "gh view swiftautomators" },
 ];
 
 export const FooterSection = () => {
@@ -101,6 +101,8 @@ export const FooterSection = () => {
               $ whoami --socials
             </h3>
             <div className="space-y-3">
+              <a href="mailto:andrebrassfield@gmail.com" className="flex items-center gap-3 text-sm hover:text-primary"><Mail className="h-5 w-5" /><span>andrebrassfield@gmail.com</span></a>
+              <a href="tel:+14792210524" className="flex items-center gap-3 text-sm hover:text-primary"><Phone className="h-5 w-5" /><span>479-221-0524</span></a>
               {socialLinks.map((social) => (
                 <a
                   key={social.name}
@@ -122,7 +124,7 @@ export const FooterSection = () => {
                           transition={{ duration: 0.15 }}
                           className="block"
                         >
-                          @DreBuilds
+                          {social.name}
                         </motion.span>
                       ) : (
                         <motion.span
@@ -142,6 +144,10 @@ export const FooterSection = () => {
               ))}
             </div>
           </motion.div>
+        </div>
+        <div className="mt-10 flex flex-wrap gap-x-6 gap-y-3 border-t border-border/50 pt-8 font-mono text-xs text-muted-foreground">
+          <a href="https://arkansasautomated.com" target="_blank" rel="noreferrer" className="hover:text-primary">Arkansas Automated</a>
+          <a href="https://fortsmithdirectory.com" target="_blank" rel="noreferrer" className="hover:text-primary">Fort Smith Directory</a>
         </div>
 
         {/* Bottom Bar */}
