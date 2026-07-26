@@ -45,7 +45,7 @@ export const ScrollReactiveGrid = ({ children, className = "" }: ScrollReactiveG
           `,
           backgroundSize: "40px 40px",
           opacity: amberIntensity,
-          // @ts-ignore - CSS custom property
+          // @ts-expect-error -- Motion style accepts runtime CSS custom properties.
           "--grid-opacity": gridOpacity,
         }}
       />

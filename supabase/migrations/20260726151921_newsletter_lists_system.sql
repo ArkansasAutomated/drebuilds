@@ -153,7 +153,7 @@ SELECT
   s.email,
   l.id,
   COALESCE(s.source, 'legacy_subscribers') AS source,
-  s.metadata,
+  '{}'::jsonb,
   COALESCE(s.subscribed_at, now())
 FROM public.subscribers s
 JOIN public.newsletter_lists l ON l.slug = 'drebuilds_main'

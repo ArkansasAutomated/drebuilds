@@ -48,7 +48,8 @@ export const useExitIntent = ({ enabled, onTrigger }: UseExitIntentOptions) => {
 
     // Check if touch device - disable exit intent on mobile
     const isTouchDevice =
-      "ontouchstart" in window || navigator.maxTouchPoints > 0;
+      ("ontouchstart" in window && window.ontouchstart !== undefined) ||
+      navigator.maxTouchPoints > 0;
     if (isTouchDevice) return;
 
     // Delay initialization to prevent accidental triggers on page load

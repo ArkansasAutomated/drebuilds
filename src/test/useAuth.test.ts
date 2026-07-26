@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
 import { useAuth } from "../hooks/useAuth";
+import type { AuthError } from "@supabase/supabase-js";
 
 // Mock Supabase client
 vi.mock("@/integrations/supabase/client", () => ({
@@ -100,7 +101,7 @@ describe("useAuth", () => {
         });
         vi.mocked(supabase.auth.signInWithPassword).mockResolvedValueOnce({
             data: { user: null, session: null },
-            error: mockError as any,
+            error: mockError as unknown as AuthError,
         });
 
         const { result } = renderHook(() => useAuth());

@@ -46,8 +46,8 @@ export const SubscribersLog = () => {
       signup_date: sub.subscribed_at
         ? format(new Date(sub.subscribed_at), "yyyy-MM-dd HH:mm")
         : "",
-      user_agent: (sub.metadata as any)?.user_agent || "",
-      entry_path: (sub.metadata as any)?.entry_path || "",
+      user_agent: typeof sub.metadata === "object" && sub.metadata && !Array.isArray(sub.metadata) ? sub.metadata.user_agent || "" : "",
+      entry_path: typeof sub.metadata === "object" && sub.metadata && !Array.isArray(sub.metadata) ? sub.metadata.entry_path || "" : "",
     }));
 
     const csv = Papa.unparse(csvData);
