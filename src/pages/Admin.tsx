@@ -4,12 +4,14 @@ import { CommandCenterLayout } from "@/components/admin/CommandCenterLayout";
 import { SubscriberPanel } from "@/components/admin/SubscriberPanel";
 import { ClickTrackingPanel } from "@/components/admin/ClickTrackingPanel";
 import { SubscribersLog } from "@/components/admin/SubscribersLog";
+import { NewsletterListsPanel } from "@/components/admin/NewsletterListsPanel";
 import { ContentEditor } from "@/components/admin/ContentEditor";
 import { OfferEditor } from "@/components/admin/OfferEditor";
 import { TelemetryPanel } from "@/components/admin/TelemetryPanel";
 import { QuickStatCard } from "@/components/admin/QuickStatCard";
 import { ConversionFunnel } from "@/components/admin/ConversionFunnel";
 import { LiveEventLog } from "@/components/admin/LiveEventLog";
+import { AuditLeadsPanel } from "@/components/admin/AuditLeadsPanel";
 import { useSubscriberStats, useClickStats } from "@/hooks/useAdminStats";
 import { useAdminRealtime } from "@/hooks/useAdminRealtime";
 import { Users, MousePointer, Zap } from "lucide-react";
@@ -74,14 +76,20 @@ const AdminDashboard = () => {
         {/* Row 4: Click Tracking */}
         <ClickTrackingPanel />
 
-        {/* Row 5: Subscribers Log */}
+        {/* Row 5: Subscribers Log (legacy) */}
         <SubscribersLog />
+
+        {/* Row 5b: Newsletter Lists (hub + spokes) */}
+        <NewsletterListsPanel />
 
         {/* Row 6: Content Management */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <ContentEditor />
           <OfferEditor />
         </div>
+
+        {/* Row 7: Audit Leads Funnel */}
+        <AuditLeadsPanel />
       </motion.div>
     </CommandCenterLayout>
   );

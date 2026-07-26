@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_leads: {
+        Row: {
+          biggest_bottleneck: string
+          business_name: string
+          created_at: string | null
+          current_tools: string[]
+          email: string
+          full_name: string
+          id: string
+          industry: string
+          phone: string
+          preferred_contact_method: string
+          referrer: string | null
+          source: string | null
+          status: string
+          team_size: string
+          updated_at: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          biggest_bottleneck: string
+          business_name: string
+          created_at?: string | null
+          current_tools?: string[]
+          email: string
+          full_name: string
+          id?: string
+          industry: string
+          phone: string
+          preferred_contact_method: string
+          referrer?: string | null
+          source?: string | null
+          status?: string
+          team_size: string
+          updated_at?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          biggest_bottleneck?: string
+          business_name?: string
+          created_at?: string | null
+          current_tools?: string[]
+          email?: string
+          full_name?: string
+          id?: string
+          industry?: string
+          phone?: string
+          preferred_contact_method?: string
+          referrer?: string | null
+          source?: string | null
+          status?: string
+          team_size?: string
+          updated_at?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       button_clicks: {
         Row: {
           button_id: string
@@ -64,6 +121,77 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      newsletter_lists: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      newsletter_subscriptions: {
+        Row: {
+          email: string
+          full_name: string | null
+          id: string
+          list_id: string
+          metadata: Json | null
+          source: string | null
+          subscribed_at: string | null
+          unsubscribed_at: string | null
+        }
+        Insert: {
+          email: string
+          full_name?: string | null
+          id?: string
+          list_id: string
+          metadata?: Json | null
+          source?: string | null
+          subscribed_at?: string | null
+          unsubscribed_at?: string | null
+        }
+        Update: {
+          email?: string
+          full_name?: string | null
+          id?: string
+          list_id?: string
+          metadata?: Json | null
+          source?: string | null
+          subscribed_at?: string | null
+          unsubscribed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_subscriptions_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "newsletter_lists"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       offer_settings: {
         Row: {
