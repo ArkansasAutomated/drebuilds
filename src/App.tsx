@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { toast } from "@/hooks/use-toast";
 import Index from "./pages/Index";
+import Audit from "./pages/Audit";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import Vault from "./pages/Vault";
@@ -39,6 +40,7 @@ const App = () => (
         <ScrollToTop />
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/audit" element={<Audit />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/vault" element={<Vault />} />
           <Route path="/admin" element={<Admin />} />
