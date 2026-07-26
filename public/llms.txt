@@ -1,0 +1,26 @@
+# DREBUILDS
+
+> DREBUILDS designs and implements practical AI agents and workflow automation for Arkansas businesses.
+
+## Primary services
+
+- [AI agents](https://www.drebuilds.online/services/ai-agents): Controlled agents for customer service, internal knowledge, operations, and sales support.
+- [Workflow automation](https://www.drebuilds.online/services/workflow-automation): Reliable connections between forms, email, spreadsheets, CRMs, accounting tools, and business systems.
+- [Automated lead follow-up](https://www.drebuilds.online/services/lead-follow-up): Lead capture, qualification, routing, scheduling, and follow-up.
+- [Document automation](https://www.drebuilds.online/services/document-automation): Extraction, validation, routing, and human review for business documents.
+- [AI consulting](https://www.drebuilds.online/services/ai-consulting): Opportunity audits, solution design, governance, pilots, and implementation.
+
+## Arkansas service areas
+
+Fort Smith, Little Rock, Fayetteville, Bentonville, Rogers, Springdale, Jonesboro, Conway, and organizations statewide.
+
+## Approach
+
+DREBUILDS starts with a measurable business workflow. Systems are designed with permissions, validation, logging, exception handling, and human approval where judgment matters. DREBUILDS works with existing software whenever practical.
+
+## Contact
+
+- [Free automation audit](https://www.drebuilds.online/audit)
+- Phone: +1-479-221-0524
+- Email: andrebrassfield@gmail.com
+- Website: https://www.drebuilds.online/

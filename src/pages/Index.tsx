@@ -1,51 +1,37 @@
-import { useState, useEffect } from "react";
-import Lenis from "lenis";
-import { BootSequence } from "@/components/sections/BootSequence";
+import { useState } from "react";
 import { HeroSection } from "@/components/sections/HeroSection";
-import { LogicGatesSection } from "@/components/sections/LogicGatesSection";
-import { ContentMarquee } from "@/components/sections/ContentMarquee";
-import { TechStackSection } from "@/components/sections/TechStackSection";
+import { ConversionSections } from "@/components/sections/ConversionSections";
 import { NewsletterSection } from "@/components/sections/NewsletterSection";
 import { FooterSection } from "@/components/sections/FooterSection";
 import { MobileCommandCenter } from "@/components/navigation/MobileCommandCenter";
 import { ScrollReactiveGrid } from "@/components/effects/ScrollReactiveGrid";
 import { ExitIntentOverlay } from "@/components/effects/ExitIntentOverlay";
 import { useExitIntent } from "@/hooks/useExitIntent";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 const Index = () => {
-  const [isBooted, setIsBooted] = useState(false);
   const [showExitIntent, setShowExitIntent] = useState(false);
 
-  // Exit intent hook - only active after boot sequence
   useExitIntent({
-    enabled: isBooted,
+    enabled: true,
     onTrigger: () => setShowExitIntent(true),
   });
 
-  useEffect(() => {
-    if (isBooted) {
-      const lenis = new Lenis({
-        duration: 1.2,
-        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Expo-out for smooth deceleration
-        smoothWheel: true,
-        wheelMultiplier: 1.0,
-        touchMultiplier: 2.0,
-        syncTouch: false,
-        syncTouchLerp: 0.075,
-      });
-
-      function raf(time: number) {
-        lenis.raf(time);
-        requestAnimationFrame(raf);
-      }
-
-      requestAnimationFrame(raf);
-
-      return () => {
-        lenis.destroy();
-      };
-    }
-  }, [isBooted]);
+  usePageMeta({
+    title: "AI Automation for Arkansas Businesses | DREBUILDS",
+    description: "DREBUILDS designs AI agents and workflow automation for Arkansas businesses. Automate lead follow-up, documents, reporting, scheduling, and operations. Start with a free audit.",
+    canonical: "https://www.drebuilds.online/",
+    schema: {
+      "@context": "https://schema.org",
+      "@type": "ProfessionalService",
+      name: "DREBUILDS",
+      url: "https://www.drebuilds.online/",
+      telephone: "+1-479-221-0524",
+      email: "andrebrassfield@gmail.com",
+      areaServed: "Arkansas",
+      serviceType: ["AI automation", "Workflow automation", "AI consulting", "Custom AI agents"],
+    },
+  });
 
   const handleDisconnect = () => {
     setShowExitIntent(false);
@@ -53,23 +39,15 @@ const Index = () => {
 
   return (
     <>
-      {!isBooted && <BootSequence onComplete={() => setIsBooted(true)} />}
-
-      {isBooted && (
-        <ScrollReactiveGrid className="min-h-screen">
-          <main className="relative bg-background min-h-screen">
-            <HeroSection />
-            <LogicGatesSection />
-            <ContentMarquee />
-            <TechStackSection />
-            <section id="newsletter">
-              <NewsletterSection />
-            </section>
-            <FooterSection />
-            <MobileCommandCenter />
-          </main>
-        </ScrollReactiveGrid>
-      )}
+      <ScrollReactiveGrid className="min-h-screen">
+        <main className="relative min-h-screen bg-background">
+          <HeroSection />
+          <ConversionSections />
+          <section id="newsletter"><NewsletterSection /></section>
+          <FooterSection />
+          <MobileCommandCenter />
+        </main>
+      </ScrollReactiveGrid>
 
       {/* Exit Intent Overlay - rendered outside scroll container */}
       <ExitIntentOverlay

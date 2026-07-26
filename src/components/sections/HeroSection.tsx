@@ -5,6 +5,7 @@ import { StatusDot } from "@/components/ui/StatusDot";
 import { CornerAccent } from "@/components/decorative/CornerAccent";
 import { ArrowRight, ClipboardCheck, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const springConfig = {
   mass: 1,
@@ -15,7 +16,7 @@ const springConfig = {
 export const HeroSection = () => {
   const navigate = useNavigate();
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <section id="hero" className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
       {/* Multi-layer Background */}
       <div className="absolute inset-0 bg-grid" />
       <div className="absolute inset-0 bg-noise" />
@@ -23,7 +24,19 @@ export const HeroSection = () => {
       {/* Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/50 to-background" />
       
-      {/* Content Container */}
+      <nav className="absolute inset-x-0 top-0 z-20 border-b border-border/70 bg-background/80 backdrop-blur">
+        <div className="container mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
+          <Link to="/" className="font-mono font-bold tracking-wider">DRE<span className="text-primary">BUILDS</span></Link>
+          <div className="hidden items-center gap-6 text-sm md:flex">
+            <a href="#outcomes" className="text-muted-foreground hover:text-primary">Outcomes</a>
+            <a href="#services" className="text-muted-foreground hover:text-primary">Services</a>
+            <a href="#process" className="text-muted-foreground hover:text-primary">Process</a>
+            <a href="#arkansas" className="text-muted-foreground hover:text-primary">Arkansas</a>
+          </div>
+          <Link to="/audit" className="border border-primary px-4 py-2 text-sm font-semibold text-primary hover:bg-primary hover:text-primary-foreground">Free audit</Link>
+        </div>
+      </nav>
+
       <div className="relative z-10 container mx-auto px-6 py-24 max-w-5xl">
         <motion.div
           className="flex flex-col items-center text-center"
@@ -38,7 +51,7 @@ export const HeroSection = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
           >
-            &gt;_ arkansas.automation.init()
+            &gt;_ practical automation for arkansas operators
           </motion.div>
 
           {/* Main Headline */}
@@ -48,9 +61,9 @@ export const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring", ...springConfig, delay: 0.3 }}
           >
-            Automate Your
+            Put repetitive work
             <br />
-            <span className="text-primary glow-amber">Arkansas Business.</span>
+            <span className="text-primary glow-amber">on autopilot.</span>
             <BlinkingCursor className="hidden md:inline-block" />
           </motion.h1>
 
@@ -61,7 +74,7 @@ export const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring", ...springConfig, delay: 0.4 }}
           >
-            Save time, reduce overhead, and scale without adding more repetitive work.
+            DREBUILDS connects your leads, documents, inboxes, spreadsheets, and business software—so your Arkansas team responds faster and gets hours back every week.
           </motion.p>
 
           {/* Status Indicator */}
@@ -82,15 +95,15 @@ export const HeroSection = () => {
             transition={{ type: "spring", ...springConfig, delay: 0.6 }}
           >
             <TextSwapButton
-              defaultText="Get Your Free Audit"
-              hoverText="run audit()"
+              defaultText="Find What to Automate"
+              hoverText="get free audit()"
               variant="primary"
               size="lg"
               icon={<ClipboardCheck size={20} />}
               onClick={() => navigate("/audit")}
             />
             <TextSwapButton
-              defaultText="Call Dre"
+              defaultText="Talk With Dre"
               hoverText="dial 479-221-0524"
               variant="outline"
               size="lg"

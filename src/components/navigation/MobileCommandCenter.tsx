@@ -11,10 +11,11 @@ const springConfig = {
 
 const navLinks = [
   { label: "~/home", href: "#hero", command: "cd ~/" },
-  { label: "~/services", href: "#logic-gates", command: "ls ./services" },
-  { label: "~/stack", href: "#tech-stack", command: "cat ./stack.json" },
+  { label: "~/outcomes", href: "#outcomes", command: "cat ./outcomes" },
+  { label: "~/services", href: "#services", command: "ls ./services" },
+  { label: "~/process", href: "#process", command: "run ./process" },
+  { label: "~/arkansas", href: "#arkansas", command: "ls ./arkansas" },
   { label: "~/newsletter", href: "#newsletter", command: "subscribe --log" },
-  { label: "~/testimonials", href: "#testimonials", command: "grep feedback" },
 ];
 
 export const MobileCommandCenter = () => {
