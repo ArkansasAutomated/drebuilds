@@ -10,7 +10,6 @@ import { TelemetryPanel } from "@/components/admin/TelemetryPanel";
 import { QuickStatCard } from "@/components/admin/QuickStatCard";
 import { ConversionFunnel } from "@/components/admin/ConversionFunnel";
 import { LiveEventLog } from "@/components/admin/LiveEventLog";
-import { RevenuePanel } from "@/components/admin/RevenuePanel";
 import { useSubscriberStats, useClickStats } from "@/hooks/useAdminStats";
 import { useAdminRealtime } from "@/hooks/useAdminRealtime";
 import { Users, MousePointer, Zap } from "lucide-react";
@@ -56,12 +55,11 @@ const AdminDashboard = () => {
           />
         </div>
 
-        {/* Row 2: Revenue & Conversion Pipeline */}
+        {/* Row 2: Conversion Pipeline & Live Events */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <RevenuePanel />
+            <LiveEventLog realtimeEvents={realtimeEvents} />
           </div>
-          <LiveEventLog realtimeEvents={realtimeEvents} />
         </div>
 
         {/* Row 3: Conversion Funnel */}

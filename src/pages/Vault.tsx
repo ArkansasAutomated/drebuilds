@@ -1,24 +1,16 @@
 import { motion } from "framer-motion";
 import { Vault as VaultIcon, Shield, Loader2 } from "lucide-react";
 import { VaultAssetGrid } from "@/components/vault/VaultAssetGrid";
-import { VaultLockedState } from "@/components/vault/VaultLockedState";
-import { useWhopUser } from "@/hooks/useWhopUser";
 import { useAuth } from "@/hooks/useAuth";
 import { CornerAccent } from "@/components/decorative/CornerAccent";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
-// Configure your Vault Plan ID here
-// This is the Whop Plan ID that grants access to The Builder's Vault
-const VAULT_PLAN_ID = "plan_Os2m8UuDrE3w5"; // Vault Membership plan
-const VAULT_PLAN_NAME = "Builder's Vault Access";
-
 const Vault = () => {
-  const { user, isLoading: authLoading } = useAuth();
-  const { hasPlan, isLoading: whopLoading, whopUser } = useWhopUser();
+  const { user, isLoading: authLoading, isAdmin } = useAuth();
 
-  const isLoading = authLoading || whopLoading;
-  const hasVaultAccess = hasPlan(VAULT_PLAN_ID);
+  const isLoading = authLoading;
+  const hasVaultAccess = isAdmin;
 
   // Show loading state
   if (isLoading) {
@@ -94,18 +86,32 @@ const Vault = () => {
             Exclusive <span className="text-primary">Automation Assets</span>
           </h2>
           <p className="text-muted-foreground max-w-xl">
-            Blueprints, code snippets, and templates to accelerate your automation journey. 
-            Members-only access to production-ready assets.
+            Blueprints, code snippets, and templates to accelerate your automation journey.
+            Admin-only access to production-ready assets.
           </p>
         </motion.div>
 
         {/* Content based on access */}
         {!user ? (
-          // Not logged in - show locked state with auth prompt
-          <VaultLockedState 
-            vaultPlanId={VAULT_PLAN_ID} 
-            vaultPlanName={VAULT_PLAN_NAME} 
-          />
+          // Not logged in - prompt to sign in
+          <div className="relative min-h-[40vh] flex items-center justify-center">
+            <div className="relative z-10 max-w-md w-full mx-4 text-center">
+              <div className="relative bg-card border border-border rounded-sm p-8">
+                <CornerAccent position="tl" size={20} />
+                <CornerAccent position="br" size={20} />
+                <p className="font-mono text-sm text-muted-foreground mb-6">
+                  // auth_required
+                </p>
+                <h3 className="text-xl font-semibold mb-4">Sign in to continue</h3>
+                <p className="text-muted-foreground text-sm mb-6">
+                  The Builder's Vault is reserved for members.
+                </p>
+                <Button asChild className="w-full">
+                  <Link to="/auth">Sign In</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
         ) : hasVaultAccess ? (
           // Has access - show asset grid
           <motion.div
@@ -116,11 +122,22 @@ const Vault = () => {
             <VaultAssetGrid />
           </motion.div>
         ) : (
-          // Logged in but no access - show locked state
-          <VaultLockedState 
-            vaultPlanId={VAULT_PLAN_ID} 
-            vaultPlanName={VAULT_PLAN_NAME} 
-          />
+          // Logged in but no access
+          <div className="relative min-h-[40vh] flex items-center justify-center">
+            <div className="relative z-10 max-w-md w-full mx-4 text-center">
+              <div className="relative bg-card border border-border rounded-sm p-8">
+                <CornerAccent position="tl" size={20} />
+                <CornerAccent position="br" size={20} />
+                <p className="font-mono text-sm text-destructive mb-4">
+                  // access_restricted
+                </p>
+                <h3 className="text-xl font-semibold mb-4">Admin access required</h3>
+                <p className="text-muted-foreground text-sm">
+                  The Builder's Vault is currently restricted to administrators.
+                </p>
+              </div>
+            </div>
+          </div>
         )}
       </main>
 

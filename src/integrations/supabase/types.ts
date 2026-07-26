@@ -242,98 +242,9 @@ export type Database = {
         }
         Relationships: []
       }
-      whop_users: {
-        Row: {
-          access_token: string
-          company_ids: string[] | null
-          created_at: string | null
-          email: string | null
-          id: string
-          metadata: Json | null
-          plan_ids: string[] | null
-          profile_pic_url: string | null
-          refresh_token: string | null
-          updated_at: string | null
-          user_id: string
-          username: string | null
-          whop_user_id: string
-        }
-        Insert: {
-          access_token: string
-          company_ids?: string[] | null
-          created_at?: string | null
-          email?: string | null
-          id?: string
-          metadata?: Json | null
-          plan_ids?: string[] | null
-          profile_pic_url?: string | null
-          refresh_token?: string | null
-          updated_at?: string | null
-          user_id: string
-          username?: string | null
-          whop_user_id: string
-        }
-        Update: {
-          access_token?: string
-          company_ids?: string[] | null
-          created_at?: string | null
-          email?: string | null
-          id?: string
-          metadata?: Json | null
-          plan_ids?: string[] | null
-          profile_pic_url?: string | null
-          refresh_token?: string | null
-          updated_at?: string | null
-          user_id?: string
-          username?: string | null
-          whop_user_id?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
-      whop_users_safe: {
-        Row: {
-          company_ids: string[] | null
-          created_at: string | null
-          email: string | null
-          id: string | null
-          metadata: Json | null
-          plan_ids: string[] | null
-          profile_pic_url: string | null
-          updated_at: string | null
-          user_id: string | null
-          username: string | null
-          whop_user_id: string | null
-        }
-        Insert: {
-          company_ids?: string[] | null
-          created_at?: string | null
-          email?: string | null
-          id?: string | null
-          metadata?: Json | null
-          plan_ids?: string[] | null
-          profile_pic_url?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-          username?: string | null
-          whop_user_id?: string | null
-        }
-        Update: {
-          company_ids?: string[] | null
-          created_at?: string | null
-          email?: string | null
-          id?: string | null
-          metadata?: Json | null
-          plan_ids?: string[] | null
-          profile_pic_url?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-          username?: string | null
-          whop_user_id?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       has_role: {
@@ -343,7 +254,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      has_vault_plan: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
@@ -470,11 +380,3 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
-
-export const Constants = {
-  public: {
-    Enums: {
-      app_role: ["admin", "user"],
-    },
-  },
-} as const

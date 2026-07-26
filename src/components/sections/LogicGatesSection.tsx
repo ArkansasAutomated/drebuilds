@@ -1,12 +1,9 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { TextSwapButton } from "@/components/ui/TextSwapButton";
 import { CornerAccent } from "@/components/decorative/CornerAccent";
-import { Cpu, Users, Package, Video, Loader2 } from "lucide-react";
+import { Cpu, Users, Package, Video } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useWhopProducts } from "@/hooks/useWhopProducts";
-import { Button } from "@/components/ui/button";
 
 const springConfig = {
   mass: 1,
@@ -14,14 +11,8 @@ const springConfig = {
   damping: 14,
 };
 
-// Mapping of offer IDs to Whop plan IDs (configure these based on your Whop plans)
-const offerToPlanMapping: Record<string, string> = {
-  consulting: "", // Add Whop plan ID for consulting
-  community: "", // Add Whop plan ID for community
-  store: "", // Add Whop plan ID for store
-  learn: "", // Add Whop plan ID for learn
-};
-
+// Direct links — no payment provider, no API calls. Update URLs here when
+// community/store/learn destinations are ready.
 const defaultOffers = [
   {
     id: "consulting",
@@ -43,7 +34,7 @@ const defaultOffers = [
     defaultCTA: "Join the Builders",
     hoverCTA: "git clone community",
     accent: "Community",
-    link: "https://whop.com/drebuilds/",
+    link: "mailto:community@drebuilds.online?subject=Agentic%20Engineering%20Hub%20%E2%80%94%20Sign%20me%20up",
   },
   {
     id: "store",
@@ -54,7 +45,7 @@ const defaultOffers = [
     defaultCTA: "Enter Store",
     hoverCTA: "cat ./inventory",
     accent: "Store",
-    link: "https://whop.com/drebuilds/",
+    link: "mailto:store@drebuilds.online?subject=Store%20inquiry",
   },
   {
     id: "learn",
@@ -96,12 +87,7 @@ const cardVariants = {
 };
 
 export const LogicGatesSection = () => {
-  const [loadingPlanId, setLoadingPlanId] = useState<string | null>(null);
-  
-  // Fetch Whop plans
-  const { plans: whopPlans, isLoading: whopLoading, createCheckout, isCheckoutLoading } = useWhopProducts();
-  
-  // Fetch local offer settings
+  // Fetch local offer settings — admins can override defaults from the OfferEditor.
   const { data: dbOffers } = useQuery({
     queryKey: ["offer-settings"],
     queryFn: async () => {
@@ -114,37 +100,25 @@ export const LogicGatesSection = () => {
     },
   });
 
-  // Merge Whop plans with local offers
+  // Merge DB overrides with defaults. No external API calls.
   const offers = defaultOffers.map((defaultOffer) => {
     const dbOffer = dbOffers?.find((o) => o.id === defaultOffer.id);
-    const whopPlanId = offerToPlanMapping[defaultOffer.id];
-    const whopPlan = whopPlans.find((p) => p.id === whopPlanId);
-    
-    // Prioritize Whop API data, then DB data, then defaults
     return {
       ...defaultOffer,
       title: dbOffer?.title || defaultOffer.title,
-      description: whopPlan?.description || dbOffer?.description || defaultOffer.description,
-      price: whopPlan ? `$${whopPlan.price}` : (dbOffer?.price || defaultOffer.price),
+      description: dbOffer?.description || defaultOffer.description,
+      price: dbOffer?.price || defaultOffer.price,
       icon: iconMap[defaultOffer.id] || Cpu,
-      whopPlanId: whopPlanId || null,
       link: dbOffer?.link || defaultOffer.link,
     };
   });
 
-  const handleOfferClick = async (offer: typeof offers[0]) => {
-    // If there's a Whop plan ID, create checkout session
-    if (offer.whopPlanId) {
-      setLoadingPlanId(offer.id);
-      try {
-        await createCheckout(offer.whopPlanId);
-      } catch (error) {
-        console.error("Checkout error:", error);
-      } finally {
-        setLoadingPlanId(null);
-      }
-    } else if (offer.link) {
-      // Fallback to static link
+  const handleOfferClick = (offer: typeof offers[0]) => {
+    if (!offer.link) return;
+    // mailto: opens the user's mail client; http(s) opens in a new tab.
+    if (offer.link.startsWith("mailto:")) {
+      window.location.href = offer.link;
+    } else {
       window.open(offer.link, "_blank", "noopener,noreferrer");
     }
   };
@@ -193,7 +167,7 @@ export const LogicGatesSection = () => {
               <div className="relative h-full p-8 bg-card border border-border rounded-sm overflow-hidden transition-all duration-300 hover:border-primary/50 hover:glow-amber-box">
                 <CornerAccent position="tl" size={20} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                 <CornerAccent position="br" size={20} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                
+
                 <div className="absolute top-4 right-4">
                   <span className="font-mono text-xs px-2 py-1 bg-primary/10 text-primary rounded-sm">
                     {offer.accent}
@@ -213,21 +187,14 @@ export const LogicGatesSection = () => {
 
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-lg text-primary">{offer.price}</span>
-                  {loadingPlanId === offer.id || (isCheckoutLoading && loadingPlanId === offer.id) ? (
-                    <Button variant="secondary" size="sm" disabled className="gap-2">
-                      <Loader2 size={14} className="animate-spin" />
-                      Processing...
-                    </Button>
-                  ) : (
-                    <TextSwapButton
-                      defaultText={offer.defaultCTA}
-                      hoverText={offer.hoverCTA}
-                      variant="secondary"
-                      size="sm"
-                      trackingId={offer.id}
-                      onClick={() => handleOfferClick(offer)}
-                    />
-                  )}
+                  <TextSwapButton
+                    defaultText={offer.defaultCTA}
+                    hoverText={offer.hoverCTA}
+                    variant="secondary"
+                    size="sm"
+                    trackingId={offer.id}
+                    onClick={() => handleOfferClick(offer)}
+                  />
                 </div>
 
                 <div className="absolute -bottom-4 -right-4 opacity-5 group-hover:opacity-10 transition-opacity">

@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useWhopUser } from "@/hooks/useWhopUser";
 import { BlinkingCursor } from "@/components/ui/BlinkingCursor";
 
 interface ProtectedRouteProps {
@@ -10,13 +9,8 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps) => {
-  const { user, isLoading: authLoading, isAdmin: isSupabaseAdmin } = useAuth();
-  const { isWhopAdmin, isLoading: whopLoading } = useWhopUser();
+  const { user, isLoading, isAdmin } = useAuth();
   const navigate = useNavigate();
-
-  const isLoading = authLoading || whopLoading;
-  // Admin access granted by either Supabase role OR Whop company membership
-  const isAdmin = isSupabaseAdmin || isWhopAdmin;
 
   useEffect(() => {
     if (!isLoading) {

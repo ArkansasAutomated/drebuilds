@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { StatusDot } from "@/components/ui/StatusDot";
-import { Database, Clock, Activity, Shield } from "lucide-react";
+import { Database, Clock, Activity } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useWhopUser } from "@/hooks/useWhopUser";
 
 const useDatabaseStats = () => {
   return useQuery({
@@ -33,7 +32,6 @@ const useDatabaseStats = () => {
 export const HUDBar = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const { data: dbStats, isLoading: isLoadingStats } = useDatabaseStats();
-  const { whopUser } = useWhopUser();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -88,32 +86,6 @@ export const HUDBar = () => {
               {formattedTime}
             </span>
           </div>
-
-          {/* Whop User Display */}
-          {whopUser && (
-            <>
-              <div className="h-4 w-px bg-border" />
-
-              {/* Username */}
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-xs text-muted-foreground">USER:</span>
-                <span className="font-mono text-xs text-foreground">
-                  @{whopUser.username || whopUser.email?.split("@")[0] || "whop_user"}
-                </span>
-              </div>
-
-              <div className="h-4 w-px bg-border" />
-
-              {/* Secure Connection Status - Electric Amber */}
-              <div className="flex items-center gap-2">
-                <Shield size={14} className="text-[#FFBF00]" />
-                <span className="w-2 h-2 rounded-full bg-[#FFBF00] status-pulse" />
-                <span className="font-mono text-xs text-[#FFBF00]">
-                  SECURE_CONNECTION: WHOP_OAUTH
-                </span>
-              </div>
-            </>
-          )}
 
           <div className="h-4 w-px bg-border" />
 

@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { z } from "zod";
 import { useAuth } from "@/hooks/useAuth";
-import { useWhopUser } from "@/hooks/useWhopUser";
 import { CornerAccent } from "@/components/decorative/CornerAccent";
 import { BlinkingCursor } from "@/components/ui/BlinkingCursor";
 import { TextSwapButton } from "@/components/ui/TextSwapButton";
@@ -29,7 +28,6 @@ const Auth = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   
   const { user, signIn, signUp, isLoading } = useAuth();
-  const { initiateWhopOAuth } = useWhopUser();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -196,21 +194,15 @@ const Auth = () => {
             </div>
             <div className="relative flex justify-center text-xs">
               <span className="bg-card px-2 text-muted-foreground font-mono">
-                // or
+                // need_help
               </span>
             </div>
           </div>
 
-          {/* Whop OAuth Button */}
-          <TextSwapButton
-            type="button"
-            defaultText="[ CONNECT_WHOP ]"
-            hoverText="> run oauth.sh"
-            variant="outline"
-            size="md"
-            className="w-full"
-            onClick={initiateWhopOAuth}
-          />
+          {/* Support Note */}
+          <p className="font-mono text-xs text-muted-foreground text-center">
+            having trouble? reach out at <a href="mailto:andre@drebuilds.online" className="text-primary hover:underline">andre@drebuilds.online</a>
+          </p>
 
           {/* Toggle Auth Mode */}
           <div className="mt-6 pt-6 border-t border-border">

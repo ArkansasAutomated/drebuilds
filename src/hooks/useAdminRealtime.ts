@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -14,7 +13,6 @@ export interface RealtimeEvent {
 
 export const useAdminRealtime = () => {
   const [realtimeEvents, setRealtimeEvents] = useState<RealtimeEvent[]>([]);
-  const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const handleNewEvent = useCallback((event: RealtimeEvent) => {
@@ -24,12 +22,7 @@ export const useAdminRealtime = () => {
       return updated;
     });
 
-    // Invalidate relevant queries for revenue events
-    if (event.event_type === "revenue" || event.event_type === "payment.succeeded") {
-      queryClient.invalidateQueries({ queryKey: ["whop-revenue"] });
-    }
-
-    // Show toast for significant events
+    // Show toast for significant revenue events
     if (event.event_type === "revenue" || event.event_type === "payment.succeeded") {
       const metadata = event.metadata as { amount?: number; currency?: string };
       toast({
@@ -42,7 +35,7 @@ export const useAdminRealtime = () => {
         description: "A new membership was activated",
       });
     }
-  }, [queryClient, toast]);
+  }, [toast]);
 
   useEffect(() => {
     // Subscribe to broadcast channel for webhook events

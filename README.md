@@ -1,25 +1,24 @@
 # Dre Builds
 
-AI education content platform and link-in-bio landing page with admin dashboard, telemetry tracking, and Whop integration.
+AI education content platform and link-in-bio landing page with admin dashboard and telemetry tracking.
 
 **Production URL**: https://drebuilds.online/
 
 ## Tech Stack
 
-- **Frontend**: Next.js 14 (App Router via Vite), React 18, TypeScript
+- **Frontend**: Vite + React 18 + TypeScript
 - **Backend**: Supabase (PostgreSQL, Auth, Realtime, Edge Functions)
 - **Styling**: Tailwind CSS + shadcn/ui components
 - **State**: TanStack React Query
-- **Integrations**: Whop (OAuth, Payments, Products)
 
 ## Features
 
 - 🏠 **Landing Page** - Animated link-in-bio with Framer Motion
-- 📊 **Admin Dashboard** - Real-time stats, conversion funnel, revenue tracking
+- 📊 **Admin Dashboard** - Real-time stats, conversion funnel, live event log
 - 📈 **Telemetry** - Click tracking, scroll milestones, session analytics
 - 📧 **Newsletter** - Email subscription with rate limiting
-- 🔐 **Auth** - Supabase Auth + Whop OAuth integration
-- 🏪 **Vault** - Premium content access via Whop plans
+- 🔐 **Auth** - Supabase Auth (email + password)
+- 🗄️ **Vault** - Admin-only content area with automation assets
 
 ## Getting Started
 
@@ -31,7 +30,7 @@ npm install
 
 # Set up environment variables
 cp .env.example .env
-# Edit .env with your Supabase and Whop credentials
+# Edit .env with your Supabase credentials
 
 # Start development server
 npm run dev
@@ -62,14 +61,13 @@ src/
 └── test/           # Vitest tests
 
 supabase/
-├── functions/      # Edge Functions (webhooks, OAuth)
+├── functions/      # Edge Functions (admin setup)
 └── migrations/     # Database schema
 ```
 
 ## Security
 
 - Row Level Security (RLS) on all tables
-- HMAC webhook signature verification
 - Session ID hashing with tamper detection
 - Rate limiting on auth and subscriptions
 

@@ -2,15 +2,3 @@ project_id = "ahwqhaplgbjevpzhjhbd"
 
 [functions.setup-admin]
 verify_jwt = false
-
-[functions.whop-oauth]
-verify_jwt = false
-
-[functions.whop-products]
-verify_jwt = false
-
-[functions.whop-revenue]
-verify_jwt = false
-
-[functions.whop-webhook]
-verify_jwt = false
