@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { attributionToRowPayload, getAttribution } from "@/lib/attribution";
 
 export const INDUSTRY_OPTIONS = [
   "Retail",
@@ -114,6 +115,10 @@ export const useAuditLeadSubmission = () => {
     const data = parsed.data;
 
     try {
+      // Pull UTM + source attribution captured at page load.
+      const attribution = attributionToRowPayload("audit");
+      const fallback = getAttribution();
+
       // Capture lightweight provenance for the admin panel.
       const insertPayload = {
         business_name: data.business_name,
@@ -125,7 +130,12 @@ export const useAuditLeadSubmission = () => {
         email: data.email,
         phone: data.phone,
         preferred_contact_method: data.preferred_contact_method,
-        source: "audit_page",
+        // Existing `source` column gets the UTM source when present,
+        // falls back to a stable label so the rollup still groups
+        // organic / direct traffic under a known bucket.
+        source: fallback.source || "audit_page",
+        source_url: attribution.source_url,
+        utm_params: attribution.utm_params,
         user_agent:
           typeof navigator !== "undefined" ? navigator.userAgent : null,
         referrer:

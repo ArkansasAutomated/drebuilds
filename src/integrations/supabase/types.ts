@@ -28,10 +28,12 @@ export type Database = {
           preferred_contact_method: string
           referrer: string | null
           source: string | null
+          source_url: string | null
           status: string
           team_size: string
           updated_at: string | null
           user_agent: string | null
+          utm_params: Json | null
         }
         Insert: {
           biggest_bottleneck: string
@@ -46,10 +48,12 @@ export type Database = {
           preferred_contact_method: string
           referrer?: string | null
           source?: string | null
+          source_url?: string | null
           status?: string
           team_size: string
           updated_at?: string | null
           user_agent?: string | null
+          utm_params?: Json | null
         }
         Update: {
           biggest_bottleneck?: string
@@ -64,10 +68,12 @@ export type Database = {
           preferred_contact_method?: string
           referrer?: string | null
           source?: string | null
+          source_url?: string | null
           status?: string
           team_size?: string
           updated_at?: string | null
           user_agent?: string | null
+          utm_params?: Json | null
         }
         Relationships: []
       }
@@ -152,6 +158,48 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_sources: {
+        Row: {
+          campaign: string | null
+          content: string | null
+          created_at: string | null
+          first_seen_at: string
+          id: string
+          last_seen_at: string
+          lead_count: number
+          lead_type: string | null
+          medium: string | null
+          source: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          campaign?: string | null
+          content?: string | null
+          created_at?: string | null
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          lead_count?: number
+          lead_type?: string | null
+          medium?: string | null
+          source?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          campaign?: string | null
+          content?: string | null
+          created_at?: string | null
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          lead_count?: number
+          lead_type?: string | null
+          medium?: string | null
+          source?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       newsletter_subscriptions: {
         Row: {
           email: string
@@ -160,8 +208,10 @@ export type Database = {
           list_id: string
           metadata: Json | null
           source: string | null
+          source_url: string | null
           subscribed_at: string | null
           unsubscribed_at: string | null
+          utm_params: Json | null
         }
         Insert: {
           email: string
@@ -170,8 +220,10 @@ export type Database = {
           list_id: string
           metadata?: Json | null
           source?: string | null
+          source_url?: string | null
           subscribed_at?: string | null
           unsubscribed_at?: string | null
+          utm_params?: Json | null
         }
         Update: {
           email?: string
@@ -180,8 +232,10 @@ export type Database = {
           list_id?: string
           metadata?: Json | null
           source?: string | null
+          source_url?: string | null
           subscribed_at?: string | null
           unsubscribed_at?: string | null
+          utm_params?: Json | null
         }
         Relationships: [
           {
@@ -375,6 +429,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      capture_lead_source: {
+        Args: {
+          p_campaign: string
+          p_content: string
+          p_lead_type: string
+          p_medium: string
+          p_source: string
+        }
+        Returns: string
+      }
+      get_source_analytics: {
+        Args: { p_days?: number }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

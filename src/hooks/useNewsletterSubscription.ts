@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { z } from "zod";
+import { attributionToRowPayload, getAttribution } from "@/lib/attribution";
 
 type SubscriptionStatus = "idle" | "loading" | "success" | "duplicate" | "error" | "rate_limited";
 
@@ -149,13 +150,21 @@ export const useNewsletterSubscription = (options: UseNewsletterSubscriptionOpti
       }
 
       // Insert new subscription
+      const attribution = attributionToRowPayload("newsletter");
+      const fallback = getAttribution();
+
       const { error: insertError } = await supabase
         .from("newsletter_subscriptions")
         .insert({
           email: normalizedEmail,
           list_id: listId,
           full_name: fullName,
-          source: normalized.source ?? defaultSource,
+          // Existing `source` column gets the UTM source when present,
+          // falls back to the caller-supplied default so organic traffic
+          // groups under a known bucket.
+          source: fallback.source || normalized.source || defaultSource,
+          source_url: attribution.source_url,
+          utm_params: attribution.utm_params as Json,
           metadata: (normalized.metadata ?? null) as Json,
         });
 

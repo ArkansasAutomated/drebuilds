@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { toast } from "@/hooks/use-toast";
+import { captureUtmFromUrl } from "@/lib/attribution";
 import Index from "./pages/Index";
 import Audit from "./pages/Audit";
 import Auth from "./pages/Auth";
@@ -31,25 +32,34 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <ScrollToTop />
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/audit" element={<Audit />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/vault" element={<Vault />} />
-          <Route path="/admin" element={<Admin />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  // Capture UTM params on first render. First-touch attribution
+  // means we only persist what we see on this load — subsequent
+  // SPA navigations don't clobber the original UTM, but they
+  // don't add a new one either (intentional: the *first* referrer
+  // is what we attribute the lead to).
+  captureUtmFromUrl();
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <ScrollToTop />
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/audit" element={<Audit />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/vault" element={<Vault />} />
+            <Route path="/admin" element={<Admin />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

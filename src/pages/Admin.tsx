@@ -12,6 +12,7 @@ import { QuickStatCard } from "@/components/admin/QuickStatCard";
 import { ConversionFunnel } from "@/components/admin/ConversionFunnel";
 import { LiveEventLog } from "@/components/admin/LiveEventLog";
 import { AuditLeadsPanel } from "@/components/admin/AuditLeadsPanel";
+import { SourceAnalyticsPanel } from "@/components/admin/SourceAnalyticsPanel";
 import { useSubscriberStats, useClickStats } from "@/hooks/useAdminStats";
 import { useAdminRealtime } from "@/hooks/useAdminRealtime";
 import { Users, MousePointer, Zap } from "lucide-react";
@@ -90,6 +91,9 @@ const AdminDashboard = () => {
 
         {/* Row 7: Audit Leads Funnel */}
         <AuditLeadsPanel />
+
+        {/* Row 8: Source Analytics (UTM / referrer attribution) */}
+        <SourceAnalyticsPanel />
       </motion.div>
     </CommandCenterLayout>
   );
