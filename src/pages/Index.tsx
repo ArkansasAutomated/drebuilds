@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { HeroSection } from "@/components/sections/HeroSection";
 import { ConversionSections } from "@/components/sections/ConversionSections";
+import { StorefrontSection } from "@/components/sections/StorefrontSection";
 import { NewsletterSection } from "@/components/sections/NewsletterSection";
 import { FooterSection } from "@/components/sections/FooterSection";
 import { MobileCommandCenter } from "@/components/navigation/MobileCommandCenter";
@@ -43,6 +44,7 @@ const Index = () => {
         <main className="relative min-h-screen bg-background">
           <HeroSection />
           <ConversionSections />
+          <StorefrontSection />
           <section id="newsletter"><NewsletterSection /></section>
           <FooterSection />
           <MobileCommandCenter />
