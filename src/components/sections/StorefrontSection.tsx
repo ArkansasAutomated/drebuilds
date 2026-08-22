@@ -24,7 +24,7 @@ const PRODUCTS = [
     tagline:
       "Real macOS agent trajectories in LoRA-ready JSONL — skip weeks of hand-labeling your GUI agent's training data.",
     features: [
-      "127+ verified trajectories from a production agent loop",
+      "500+ verified trajectories from a production agent loop",
       "Goal → action → verified outcome, every row",
       "Self-correction events included",
       "Drop into mlx_lm.lora / Unsloth / axolotl as-is",
