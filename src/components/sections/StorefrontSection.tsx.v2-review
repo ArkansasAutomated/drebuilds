@@ -30,7 +30,7 @@ const PRODUCTS = [
       "Drop into mlx_lm.lora / Unsloth / axolotl as-is",
     ],
     // PLACEHOLDER — replace with new plan checkout URL
-    href: "https://whop.com/checkout/plan_tfCWj7wFy0DQD",
+    href: "https://whop.com/checkout/PLACEHOLDER_DATASET_PLAN",
   },
   {
     icon: Globe,
@@ -46,7 +46,7 @@ const PRODUCTS = [
       "Rate-limit aware and resumable — built for unattended runs",
     ],
     // PLACEHOLDER — replace with new plan checkout URL
-    href: "https://whop.com/checkout/plan_FTJzUxLHFWn0B",
+    href: "https://whop.com/checkout/PLACEHOLDER_PSEO_PLAN",
   },
   {
     icon: Crosshair,
@@ -62,7 +62,7 @@ const PRODUCTS = [
       "Warmup, deliverability, and reply-triage playbooks monthly",
     ],
     // PLACEHOLDER — replace with new plan checkout URL
-    href: "https://whop.com/checkout/plan_1wiRWjokMsApM",
+    href: "https://whop.com/checkout/PLACEHOLDER_OUTREACH_PLAN",
   },
 ];
 

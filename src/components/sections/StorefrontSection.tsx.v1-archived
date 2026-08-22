@@ -1,13 +1,6 @@
 import { motion } from "framer-motion";
 import { CornerAccent } from "@/components/decorative/CornerAccent";
-import { Database, Globe, Crosshair, ArrowUpRight } from "lucide-react";
-
-/**
- * PHASE 15 PIVOT — REVIEW ONLY, DO NOT PUSH.
- * Checkout URLs below are placeholders until create_products_v2.py --execute
- * returns the new plan IDs (mapping is printed by that script).
- * Old section lives in git history at 1b3de19.
- */
+import { Terminal, Bot, Mail, ArrowUpRight } from "lucide-react";
 
 const springConfig = {
   mass: 1,
@@ -17,52 +10,49 @@ const springConfig = {
 
 const PRODUCTS = [
   {
-    icon: Database,
-    name: "Experience Buffer Dataset",
-    price: "$39",
+    icon: Terminal,
+    name: "Zero-Cost Local OS",
+    price: "$79",
     cadence: "one-time",
     tagline:
-      "Real macOS agent trajectories in LoRA-ready JSONL — skip weeks of hand-labeling your GUI agent's training data.",
+      "The exact blueprint for running an autonomous AI operation on one 16GB Mac at $0/month in API fees.",
     features: [
-      "127+ verified trajectories from a production agent loop",
-      "Goal → action → verified outcome, every row",
-      "Self-correction events included",
-      "Drop into mlx_lm.lora / Unsloth / axolotl as-is",
+      "Model routing doctrine",
+      "MLX production setup on Apple Silicon",
+      "Closed-loop agent architecture",
+      "Experience flywheel: trajectories → LoRA → skill",
     ],
-    // PLACEHOLDER — replace with new plan checkout URL
-    href: "https://whop.com/checkout/plan_tfCWj7wFy0DQD",
+    href: "https://whop.com/checkout/plan_8AAJehNzeYpvA",
   },
   {
-    icon: Globe,
-    name: "Programmatic SEO Engine",
+    icon: Mail,
+    name: "Cold Email Automation Fleet",
     price: "$149",
     cadence: "one-time",
     tagline:
-      "A Python repo that plans, drafts, and publishes niche pages at volume on YOUR hardware. Zero per-page API bills.",
+      "The programmatic multi-agent lead-gen pipeline: scrape, qualify, personalize, send, triage.",
     features: [
-      "Multi-agent pipeline: cluster → outline → draft → publish",
-      "Local LLM inference (MLX/Ollama-compatible)",
-      "WordPress REST + headless CMS targets included",
-      "Rate-limit aware and resumable — built for unattended runs",
+      "Multi-agent pipeline reference implementation",
+      "Local-model personalization at scale",
+      "Warmup schedules + deliverability playbook",
+      "CAN-SPAM-honest copy standards built in",
     ],
-    // PLACEHOLDER — replace with new plan checkout URL
-    href: "https://whop.com/checkout/plan_FTJzUxLHFWn0B",
+    href: "https://whop.com/checkout/plan_Oy3G7odqQ3H6s",
   },
   {
-    icon: Crosshair,
-    name: "Cold Outreach Agent Framework",
+    icon: Bot,
+    name: "Local Business AI Concierge",
     price: "$197",
     cadence: "/month · founder tier",
     tagline:
-      "Multi-agent outbound that reads pages instead of scraping patterns — finds, qualifies, and personalizes autonomously.",
+      "An inbound agent that qualifies leads and books appointments while you sleep.",
     features: [
-      "Discovery agents that read pages like a human would",
-      "ICP-scored qualification on autopilot",
-      "First lines written by models that actually visited the site",
-      "Warmup, deliverability, and reply-triage playbooks monthly",
+      "Answers every lead in seconds, 24/7",
+      "Qualifies against your criteria",
+      "Books straight to your calendar",
+      "Nightly qualification report",
     ],
-    // PLACEHOLDER — replace with new plan checkout URL
-    href: "https://whop.com/checkout/plan_1wiRWjokMsApM",
+    href: "https://whop.com/checkout/plan_lqXy6pTVMyJUS",
   },
 ];
 
@@ -89,7 +79,7 @@ export const StorefrontSection = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.05 }}
         >
-          Buy the systems, not the theory
+          Deploy the stack yourself
         </motion.h2>
 
         <motion.p
@@ -99,8 +89,8 @@ export const StorefrontSection = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.15 }}
         >
-          Working assets pulled straight out of a production AI operation.
-          Instant delivery. No calls, no demos, no implementation purgatory.
+          The same systems running this operation — packaged, documented,
+          and fulfilled instantly. No calls, no demos, no waiting.
         </motion.p>
 
         <div className="grid gap-6 md:grid-cols-3">
@@ -157,8 +147,8 @@ export const StorefrontSection = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          $ instant delivery :: commercial license on datasets :: cancel anytime
-          on subscriptions
+          $ instant delivery via Whop :: 30-day guarantee on one-time products ::
+          cancel anytime on subscriptions
         </motion.p>
       </div>
     </section>
