@@ -13,6 +13,8 @@ import Admin from "./pages/Admin";
 import Vault from "./pages/Vault";
 import NotFound from "./pages/NotFound";
 import SeoLanding from "./pages/SeoLanding";
+import BlogIndex from "./pages/BlogIndex";
+import BlogPost from "./pages/BlogPost";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -51,6 +53,8 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/audit" element={<Audit />} />
+            <Route path="/blog" element={<BlogIndex />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/arkansas/:slug" element={<SeoLanding type="location" />} />
             <Route path="/services/:slug" element={<SeoLanding type="service" />} />
             <Route path="/auth" element={<Auth />} />
