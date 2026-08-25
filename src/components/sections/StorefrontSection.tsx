@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { CornerAccent } from "@/components/decorative/CornerAccent";
-import { Database, Globe, Crosshair, ArrowUpRight } from "lucide-react";
+import { Database, Globe, Crosshair, MapPin, ArrowUpRight } from "lucide-react";
 
 /**
  * PHASE 15 PIVOT — REVIEW ONLY, DO NOT PUSH.
@@ -64,6 +64,21 @@ const PRODUCTS = [
     // PLACEHOLDER — replace with new plan checkout URL
     href: "https://whop.com/checkout/plan_1wiRWjokMsApM",
   },
+  {
+    icon: MapPin,
+    name: "The Local Domination System",
+    price: "$39",
+    cadence: "one-time",
+    tagline:
+      "The exact $20/month local-lead system we run — 31 leads in one night, deterministic QC gates, six live spoke sites.",
+    features: [
+      "Stack map for ~$20/month: ingest, clean, triage, draft",
+      "Deterministic QC gate — 0-100 scoring, auto-blocks contaminated drafts",
+      "Weekly invoice-ready client report from live lead data",
+      "Pilot playbook: $40/lead floor, monthly cap, no term",
+    ],
+    href: "https://whop.com/checkout/plan_Ky20RpOVyOUqr",
+  },
 ];
 
 export const StorefrontSection = () => {
@@ -103,7 +118,7 @@ export const StorefrontSection = () => {
           Instant delivery. No calls, no demos, no implementation purgatory.
         </motion.p>
 
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           {PRODUCTS.map((p, i) => (
             <motion.a
               key={p.name}
