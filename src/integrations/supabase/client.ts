@@ -2,8 +2,19 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const configuredUrl = import.meta.env.VITE_SUPABASE_URL;
+const configuredPublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+// The public site must still render when the optional Supabase backend is not
+// configured. Supabase validates both values during client construction, so
+// use an inert endpoint instead of crashing the entire React application.
+export const isSupabaseConfigured = Boolean(configuredUrl && configuredPublishableKey);
+const SUPABASE_URL = configuredUrl || 'https://supabase-disabled.invalid';
+const SUPABASE_PUBLISHABLE_KEY = configuredPublishableKey || 'supabase-disabled';
+
+if (!isSupabaseConfigured) {
+  console.warn('Supabase is not configured; backend features are disabled.');
+}
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
