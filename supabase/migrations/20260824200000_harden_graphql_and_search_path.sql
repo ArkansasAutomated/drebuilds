@@ -7,10 +7,9 @@
 --   * No data collections currently reflected to anon, but the
 --     surface auto-exposes any future table granted to anon.
 --   * 13/13 tables RLS-enabled (verified across migrations).
---   * No SECURITY DEFINER functions exist in repo migrations;
---     the flagged mutable search_path function lives outside
---     the repo (dashboard-era or managed) - the DO block below
---     pins ALL of them in public, present or future.
+--   * The live advisor identifies set_updated_at_audit_leads()
+--     as the mutable-search-path function; its body is safe with
+--     an empty path because it references no application objects.
 -- ============================================================
 
 -- ------------------------------------------------------------
@@ -18,37 +17,19 @@
 --    The application uses PostgREST only. Service role keeps
 --    EXECUTE so server-side tooling and Supabase dashboard
 --    integrations are unaffected.
+--    The live catalog exposes graphql_public.graphql(text,text,jsonb,jsonb).
+--    Revoke PUBLIC as well because anon/authenticated inherit its grants.
 --    Reversible alternative if ever needed: GRANT EXECUTE back.
---    Nuclear option (drops endpoint entirely): drop extension
---    pg_graphql cascade - deliberately NOT chosen.
+--    The extension remains installed for service-role/dashboard tooling.
 -- ------------------------------------------------------------
-REVOKE EXECUTE ON FUNCTION [graphql].graphql_root FROM anon, authenticated;
-REVOKE EXECUTE ON FUNCTION graphql.graphql_root FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION graphql_public.graphql(text, text, jsonb, jsonb)
+  FROM PUBLIC, anon, authenticated;
 
 -- ------------------------------------------------------------
--- 2. Pin search_path to empty on every SECURITY DEFINER
---    function in public (advisor: "mutable search path").
---    Generic over whatever exists post-restore, including
---    functions created outside this repo's migrations.
---    Empty search_path defeats search-path hijacking.
+-- 2. Pin the advisor-flagged trigger function's search_path.
+--    Do not generically rewrite every SECURITY DEFINER function:
+--    several existing admin RPCs intentionally use unqualified table
+--    references and would fail at runtime with an empty search_path.
+--    This trigger only touches NEW and pg_catalog.now(), so empty is safe.
 -- ------------------------------------------------------------
-DO $$
-DECLARE
-  fn record;
-  altered integer := 0;
-BEGIN
-  FOR fn IN
-    SELECT p.oid::regprocedure AS fnid
-    FROM pg_proc p
-    JOIN pg_namespace n ON n.oid = p.pronamespace
-    WHERE n.nspname = 'public'
-      AND p.prosecdef
-      AND (p.proconfig IS NULL
-           OR NOT ('search_path=''''') = ANY (p.proconfig))
-  LOOP
-    EXECUTE format('ALTER FUNCTION %s SET search_path = ''''', fn.fnid);
-    altered := altered + 1;
-    RAISE NOTICE 'pinned search_path on %', fn.fnid;
-  END LOOP;
-  RAISE NOTICE 'hardening complete: % function(s) pinned', altered;
-END $$;
+ALTER FUNCTION public.set_updated_at_audit_leads() SET search_path = '';
