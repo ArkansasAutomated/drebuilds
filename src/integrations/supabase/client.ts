@@ -2,8 +2,13 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const configuredUrl = import.meta.env.VITE_SUPABASE_URL;
-const configuredPublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const configuredUrl =
+  import.meta.env.VITE_SUPABASE_URL || import.meta.env.NEXT_PUBLIC_SUPABASE_URL;
+const configuredPublishableKey =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  import.meta.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+  import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 // The public site must still render when the optional Supabase backend is not
 // configured. Supabase validates both values during client construction, so
