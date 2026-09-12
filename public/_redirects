@@ -1,1 +1,2 @@
-/*    /index.html   200
+# Static files and prerendered routes win. Unknown paths must 404 (DRE-160).
+# Do not SPA-fallback /* to /index.html.
