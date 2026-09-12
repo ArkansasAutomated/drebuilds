@@ -1,0 +1,12 @@
+# DREBUILDS
+
+DREBUILDS designs and implements practical AI agents and workflow automation for Arkansas businesses.
+
+Site: https://www.drebuilds.online/
+llms.txt: https://www.drebuilds.online/llms.txt
+Sitemap: https://www.drebuilds.online/sitemap.xml
+Audit: https://www.drebuilds.online/audit
+Contact: andrebrassfield@gmail.com
+Phone: +1-479-221-0524
+
+Preferred crawl surfaces are the sitemap URLs. Do not treat unknown paths as the homepage.

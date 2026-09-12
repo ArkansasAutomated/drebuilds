@@ -5,11 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "python3 scripts/gen_blog_content.py && vite build",
+    "build": "python3 scripts/gen_blog_content.py && vite build && node scripts/prerender-html.mjs",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest run",
+    "test": "vitest run && node --test scripts/prerender-html.test.mjs",
     "test:watch": "vitest"
   },
   "dependencies": {
